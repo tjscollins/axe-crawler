@@ -1,0 +1,33 @@
+{
+    "name": "axe-crawler",
+    "version": "0.1.0",
+    "description": "A website crawler meant to automatically test a website for accessibility issues using the axe-core library",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "node_modules/babel-cli/bin/babel.js src/index.js > dist/axe-crawler.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Tyler Collins",
+    "license": "MIT",
+    "dependencies": {
+        "axe-core": "^2.4.1",
+        "axe-webdriverjs": "^1.1.5",
+        "axios": "^0.16.2",
+        "babel": "^6.23.0",
+        "babel-cli": "^6.26.0",
+        "babel-preset-env": "^1.6.0",
+        "cheerio": "^1.0.0-rc.2",
+        "escape-html": "^1.0.3",
+        "marked": "^0.3.6",
+        "minimist": "^1.2.0",
+        "selenium-webdriver": "^3.5.0",
+        "validator": "^8.2.0"
+    },
+    "devDependencies": {
+        "gulp": "^3.9.1",
+        "gulp-concat": "^2.6.1",
+        "gulp-sourcemaps": "^2.6.1",
+        "webpack": "^3.6.0",
+        "webpack-stream": "^3.2.0"
+    }
+}
