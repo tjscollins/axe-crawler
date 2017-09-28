@@ -43,10 +43,14 @@ let main = (() => {
                 result,
                 view
             }) {
-                reports.violations[result.url] = {};
-                reports.violations[result.url][view.name] = result.violations;
-                reports.passes[result.url][view.name] = result.passes;
-                reports.incompletes[result.url][view.name] = result.incompletes;
+                try {
+                    reports.violations[result.url] = {};
+                    reports.violations[result.url][view.name] = result.violations;
+                    reports.passes[result.url][view.name] = result.passes;
+                    reports.incompletes[result.url][view.name] = result.incompletes;
+                } catch (err) {
+                    console.log(err);
+                }
             });
             let completeReport = JSON.stringify(reports, null, 2);
             fs.writeFile(OUTPUT + '.json', completeReport);
@@ -134,7 +138,7 @@ let testPage = (() => {
         let driver = new webDriver.Builder().forBrowser('chrome').setChromeOptions(options).build();
         let outputReport = null;
         yield driver.get(url).then(function () {
-            console.log('Testing: ', url);
+            console.log('Testing: ', url, view.name);
             axeBuilder(driver).analyze(function (results) {
                 outputReport = results;
             });
@@ -252,15 +256,9 @@ function buildHTMLReport(reports) {
     body += marked('This report should is not a complete accessibility audit.  This report only documents those accessibility features tested by the axe-core library, and should not be considered exhaustive of the possible accessibility issues a website may have.  More information regarding the features tested by the axe-core library may be found at [axe-core.org](https://axe-core.org/)') + '</div></div>';
     body += '<div class="row"><div class="col-xs-12">';
 
-    function sumViolationsOverViews(violations) {
-        return Object.entries(violations).reduce((sum, [view, errs]) => {
-            return sum + errs.length;
-        });
-    }
-
     try {
         body += marked('## Summary of Violations: ' + Object.entries(reports.violations).reduce((total, [url, violations]) => {
-            return total + sumViolationsOverViews(violations);
+            return total + violations.length;
         }, 0) + ' total violations') + '</div></div>';
     } catch (err) {
         console.log('Error:', err);
@@ -268,17 +266,17 @@ function buildHTMLReport(reports) {
     }
     body += '<div class="row"><div class="col-xs-12">';
     Object.entries(reports.violations).forEach(([url, violations]) => {
-        let violationCount = sumViolationsOverViews(violations);
+        let violationCount = violations.length;
 
         body += marked('### ' + escape(url) + ' ' + violationCount + ' violations');
         if (violationCount !== 0) {
             let list = '<ol>';
-            violations.forEach(({
+            Object.entries(violations).forEach(([view, {
                 impact,
                 nodes,
                 description,
                 id
-            }) => {
+            }]) => {
                 list += '<li>' + impact.toUpperCase() + ': ' + escape(description) + '<br />';
                 list += '';
                 list += '<span>Affected Nodes: </span><ul>';
