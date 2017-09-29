@@ -16,32 +16,11 @@ const axeBuilder = require('axe-webdriverjs');
 const chromeDriver = require('selenium-webdriver/chrome');
 const webDriver = require('selenium-webdriver');
 
-polyfills();
-
 /**
- * main - main function to start scraping the website, build the queue of individual pages
- *        and run axe tests on each page
+ * saveReports - output the results of axe-core's test to HTML and JSON formats
  *
- * @param {string} url homepage of website to be scraped and tested.
+ * @param {object} results
  */
-async function main(domain) {
-  // Read config
-  const opts = crawlerOpts();
-  // Create Queue of links on main page
-  console.log('Crawling website to depth of: ', DEPTH);
-  const linkQueue = await crawl(domain, DEPTH, filterLinks(domain));
-
-  console.log(`Found ${linkQueue.size} links within ${domain}`);
-  console.log('Total urls to test:', FIRST_LINKS || linkQueue.size);
-
-  // Test each link
-  Promise.all([...linkQueue]
-    .reduce(urlForEachView, [])
-    .slice(0, FIRST_LINKS)
-    .map(testPage))
-    .then(saveReports).catch(console.log);
-}
-
 function saveReports(results) {
   console.log('Creating reports: ', `${OUTPUT}.json`, `${OUTPUT}.html`);
   const reports = results.reduce(resultsToReports, {});
@@ -58,10 +37,7 @@ function saveReports(results) {
  * @param {object} view
  * @returns {object}
  */
-function resultsToReports(reports, {
-  result,
-  view,
-}) {
+function resultsToReports(reports, { result, view }) {
   try {
     reports[result.url] = Object.assign({
       violations: {},
@@ -128,4 +104,32 @@ function filterLinks(domain) {
     .filter(matchDomain(domain)));
 }
 
+/**
+ * main - main function to start scraping the website, build the queue of individual pages
+ *        and run axe tests on each page
+ *
+ * @param {string} url homepage of website to be scraped and tested.
+ */
+async function main() {
+  // Read config
+  const opts = crawlerOpts();
+  const domain = opts.domains.pop();
+
+  // Create Queue of links on main page
+  console.log(`Crawling ${domain} to depth of:  ${opts.depth}`);
+  const linkQueue = await crawl(domain, opts.depth, filterLinks(domain));
+
+  console.log(`Found ${linkQueue.size} links within ${domain}`);
+  console.log('Total urls to test:', opts.check || linkQueue.size);
+
+  // Test each link
+  Promise.all([...linkQueue]
+    .reduce(urlForEachView, [])
+    .slice(0, opts.check)
+    .map(testPage))
+    .then(saveReports)
+    .catch(console.log);
+}
+
+polyfills();
 main();
