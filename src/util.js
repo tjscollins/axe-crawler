@@ -22,6 +22,6 @@ export function notMedia(url) {
  * @param {string} domain
  */
 export function matchDomain(domain) {
-  return (url) => new RegExp(domain).test(url) ||
+  return url => new RegExp(domain).test(url) ||
             /^\/\w+/.test(url);
 }
