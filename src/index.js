@@ -5,7 +5,7 @@ import webDriver from 'selenium-webdriver';
 import chromeDriver from 'selenium-webdriver/chrome';
 import axeBuilder from 'axe-webdriverjs';
 
-import { removeMedia, matchDomain } from './util';
+import { notMedia, matchDomain } from './util';
 import polyfills from './polyfills';
 import { outputToHTML, outputToJSON } from './output';
 import crawl from './crawler';
@@ -96,7 +96,7 @@ async function testPage({ url, viewPort }) {
 
 function filterLinks(domain) {
   return link => isURL(link) &&
-    removeMedia(link) &&
+    notMedia(link) &&
     matchDomain(domain)(link);
 }
 
