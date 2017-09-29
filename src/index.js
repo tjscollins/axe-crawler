@@ -15,10 +15,10 @@ import crawlerOpts from './config';
  * resultsToReports - function applied by Array.prototype.reduce to array of results to combine for
  *                    printing to reports
  *
- * @param {object} reports
- * @param {object} result
- * @param {object} viewPort
- * @returns {object}
+ * @param {Object} reports
+ * @param {Object} result
+ * @param {Object} viewPort
+ * @returns {Object}
  */
 function resultsToReports(reports, { result, viewPort }) {
   try {
@@ -42,8 +42,8 @@ function resultsToReports(reports, { result, viewPort }) {
  * generateReportSaveFn - output the results of axe-core's test to HTML and
  * JSON formats
  *
- * @param {object} globalOptions
- * @returns {fn} callback function to print results of axe-core tests.
+ * @param {Object} globalOptions
+ * @returns {Function} callback function to print results of axe-core tests.
  */
 function generateReportSaveFn({ output }) {
   return (results) => {
@@ -58,8 +58,8 @@ function generateReportSaveFn({ output }) {
  * createURLViewReducer - generates a callback function for used to reduce list
  * of urls into list of {url, viewPort} combinations
  *
- * @param {object} globalOptions
- * @returns {fn} callback function for reduce
+ * @param {Object} globalOptions
+ * @returns {Function} callback function for reduce
  */
 function createURLViewReducer(globalOptions) {
   return (links, url) => {

@@ -13,7 +13,7 @@ import cheerio from 'cheerio';
 /**
  * queueLinks - parses page content and appends all links on the page to existing queue.
  *
- * @param {AxiosResponse} pageContent axios response containing page data to be
+ * @param {Promise} pageContent axios response containing page data to be
  * parsed
  * @param {Function} filterFn function to be used to filter out urls (e.g.
  * removeMedia, noFTP, etc.)
