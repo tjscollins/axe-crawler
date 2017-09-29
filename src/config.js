@@ -43,6 +43,7 @@ const DEFAULT_OPTS = {
  *
  * @param {string} views value from cmd line option --viewPorts mobile:360x640,
  * tablet:768x1024 for example.
+ * @returns {Object[]} array of viewPort objects to be added to globalOptions
  */
 function parseViewPortsArg(views) {
   return views.split(',')
