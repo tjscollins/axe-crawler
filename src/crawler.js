@@ -1,23 +1,23 @@
 /**
- * @fileOverview Basic webcrawler function -- uses sets to build a queue of links as output
+ * @fileOverview Basic webcrawler function -- uses sets to build a queue of
+ * links as output
+ *
  * @name crawler.js
  * @author Tyler Collins
  * @license MIT
  */
-const axios = require('axios');
-const cheerio = require('cheerio');
-
-const {
-  isURL,
-} = require('validator');
+import { isURL } from 'validator';
+import axios from 'axios';
+import cheerio from 'cheerio';
 
 /**
- * buildLinkQueue - Crawls through page links and builds a set of all pages to
- *                  test.  Goes 5 levels deep through links checking for new
- *                  pages by default
+ * crawl - Crawls through page links and builds a set of all pages to test.
+ * Goes 5 levels deep through links checking for new pages by default
  *
- * @param {object} pageContent Promise returned by axios.get
+ * @param {string} domain domain to crawl through
  * @param {int} depth Levels to recurse through website to find new links.
+ * @param {fn} filterFn function to be used to filter out urls (e.g.
+ * removeMedia, noFTP, etc.)
  */
 export default async function crawl(domain, depth = 5, filterFn) {
   // Validate url and throw error if invalid
@@ -26,13 +26,18 @@ export default async function crawl(domain, depth = 5, filterFn) {
     throw new Error(`Invalid url: ${url}`);
   }
 
+  // Return initial url if depth === 0
+  if (depth === 0) {
+    return new Set([url]);
+  }
+
   // Scrape main url
   const mainPage = await axios.get(url);
 
-  const allLinks = filterFn(await queueLinks(domain, mainPage, null));
+  const allLinks = await queueLinks(domain, mainPage, filterFn);
   let links = new Set([...allLinks]);
 
-  for (let i = 1; i < depth; i++) {
+  for (let i = 1; i < depth; ++i) {
     if (links.size == 0) {
       i = depth;
     }
@@ -62,10 +67,12 @@ export default async function crawl(domain, depth = 5, filterFn) {
 /**
  * queueLinks - parses page content and appends all links on the page to existing queue.
  *
- * @param {object} pageContent html string holding the content of the page to be parsed
- * @param {set} existingQueue a set of existing links that new links will be added to.  Queue should be a set.
+ * @param {object} pageContent html string holding the content of the page to
+ * be parsed
+ * @param {set} existingQueue a set of existing links that new links will be
+ *  added to.  Queue should be a set.
  */
-export function queueLinks(domain, pageContent, existingQueue) {
+export function queueLinks(domain, pageContent, filterFn) {
   if (pageContent.status == 200) {
     const links = cheerio.load(pageContent.data)('a');
     return new Set(Object.keys(links)
@@ -76,7 +83,7 @@ export function queueLinks(domain, pageContent, existingQueue) {
         return null;
       })
       .filter(url => typeof url === 'string')
-      .filter(url => isURL(url))
+      .filter(filterFn)
       .map(url => url.replace(/^https/, 'http')));
   }
   console.log(Error(`Website returned an error: ${pageContent.status}`));
