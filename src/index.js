@@ -127,12 +127,16 @@ async function main() {
   const linkQueue = await crawl(domain, opts.depth, filterLinks(domain));
 
   console.log(`Found ${linkQueue.size} links within ${domain}`);
-  console.log('Total urls to test:', opts.check || linkQueue.size);
+  console.log('Total urls to test:', Math.min(opts.check, linkQueue.size));
+  console.log(`Testing ${opts.viewPorts.length} views: `);
+  opts.viewPorts.forEach((viewPort) => {
+    console.log(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
+  });
 
   // Test each link
   Promise.all([...linkQueue]
     .reduce(createURLViewReducer(opts), [])
-    .slice(0, opts.check)
+    .slice(0, opts.check * opts.viewPorts.length)
     .map(testPage))
     .then(generateReportSaveFn(opts))
     .catch(console.log);
