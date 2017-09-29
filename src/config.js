@@ -57,6 +57,14 @@ function parseViewPortsArg(views) {
     }).filter(view => view);
 }
 
+/**
+ * crawlerOpts - combine default options, config file options, and cmd line
+ * options into single global options object
+ *
+ * @export
+ * @param {string} file filename of config file
+ * @returns {Object} globalOptions object
+ */
 export default function crawlerOpts(file) {
   const argv = minimist(process.argv.slice(2));
   argv.domains = argv._;
