@@ -39,12 +39,14 @@ const DEFAULT_OPTS = {
 
 export default function crawlerOpts(file) {
   const argv = minimist(process.argv.slice(2));
+  argv.domains = argv._;
+
   const optsFile = file || DEFAULT_FILE;
   try {
     return Object.assign(DEFAULT_OPTS, JSON.parse(fs.readFileSync(optsFile)), argv);
   } catch (err) {
     if (err.code === 'ENOENT' && err.path === optsFile) {
-      return DEFAULT_OPTS;
+      return Object.assign(DEFAULT_OPTS, argv);
     }
     throw err;
   }
