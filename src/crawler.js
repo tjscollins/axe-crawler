@@ -70,7 +70,7 @@ export default async function crawl(domain, depth = 5, filterFn) {
     }
     const newLinks = await Promise.all([...links].map(async (url) => {
       const newPage = await axios.get(url);
-      return filterFn(queueLinks(domain, newPage, null));
+      return queueLinks(newPage, filterFn);
     }));
 
     const newLinkSet = newLinks
