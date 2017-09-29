@@ -1,6 +1,6 @@
 /**
  * @fileOverview Basic webcrawler function -- uses sets to build a queue of
- * links as output
+ * links to be returned
  *
  * @name crawler.js
  * @author Tyler Collins
@@ -13,9 +13,9 @@ import cheerio from 'cheerio';
 /**
  * queueLinks - parses page content and appends all links on the page to existing queue.
  *
- * @param {object} pageContent html string holding the content of the page to
- * be parsed
- * @param {fn} filterFn function to be used to filter out urls (e.g.
+ * @param {AxiosResponse} pageContent axios response containing page data to be
+ * parsed
+ * @param {Function} filterFn function to be used to filter out urls (e.g.
  * removeMedia, noFTP, etc.)
  */
 export function queueLinks(pageContent, filterFn) {
@@ -40,10 +40,11 @@ export function queueLinks(pageContent, filterFn) {
  * crawl - Crawls through page links and builds a set of all pages to test.
  * Goes 5 levels deep through links checking for new pages by default
  *
- * @param {string} domain domain to crawl through
- * @param {int} depth Levels to recurse through website to find new links.
- * @param {fn} filterFn function to be used to filter out urls (e.g.
+ * @param {String} domain domain to crawl through
+ * @param {Number} depth Levels to recurse through website to find new links.
+ * @param {Function} filterFn function to be used to filter out urls (e.g.
  * removeMedia, noFTP, etc.)
+ * @returns {Set<String>} queue of all unique links matching filterFn
  */
 export default async function crawl(domain, depth = 5, filterFn) {
   // Validate url and throw error if invalid
