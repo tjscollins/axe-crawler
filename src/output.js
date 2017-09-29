@@ -42,6 +42,33 @@ export function outputToHTML(file, reports) {
     return Object.entries(report.passes).reduce((sum, [viewName, result]) => sum + result.length, 0);
   }
 
+  function writeNodeMessages(list, {
+    html,
+    any,
+    all,
+    none,
+  }) {
+  /* eslint-disable no-param-reassign */
+    list += `<li>${escape(html)}`;
+    any.forEach(({
+      message,
+    }) => {
+      list += `<br />${escape(message)}`;
+    });
+    all.forEach(({
+      message,
+    }) => {
+      list += `<br />${escape(message)}`;
+    });
+    none.forEach(({
+      message,
+    }) => {
+      list += `<br />${escape(message)}`;
+    });
+    list += '</li>';
+    return list;
+  /* eslint-enable no-param-reassign */
+  }
   function printViewCounts(body, report, reportType) {
     body += '<ul>';
     Object.entries(report[reportType]).forEach(([view, results]) => {
@@ -126,28 +153,3 @@ export function outputToHTML(file, reports) {
   fs.writeFile(file, head + body + foot);
 }
 
-function writeNodeMessages(list, {
-  html,
-  any,
-  all,
-  none,
-}) {
-  list += `<li>${escape(html)}`;
-  any.forEach(({
-    message,
-  }) => {
-    list += `<br />${escape(message)}`;
-  });
-  all.forEach(({
-    message,
-  }) => {
-    list += `<br />${escape(message)}`;
-  });
-  none.forEach(({
-    message,
-  }) => {
-    list += `<br />${escape(message)}`;
-  });
-  list += '</li>';
-  return list;
-}
