@@ -11,6 +11,32 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 
 /**
+ * queueLinks - parses page content and appends all links on the page to existing queue.
+ *
+ * @param {object} pageContent html string holding the content of the page to
+ * be parsed
+ * @param {fn} filterFn function to be used to filter out urls (e.g.
+ * removeMedia, noFTP, etc.)
+ */
+export function queueLinks(pageContent, filterFn) {
+  if (pageContent.status === 200) {
+    const links = cheerio.load(pageContent.data)('a');
+    return new Set(Object.keys(links)
+      .map((n) => {
+        if (links[n].attribs) {
+          return links[n].attribs.href;
+        }
+        return null;
+      })
+      .filter(url => typeof url === 'string')
+      .filter(filterFn)
+      .map(url => url.replace(/^https/, 'http')));
+  }
+  console.log(Error(`Website returned an error: ${pageContent.status}`));
+  return new Set();
+}
+
+/**
  * crawl - Crawls through page links and builds a set of all pages to test.
  * Goes 5 levels deep through links checking for new pages by default
  *
@@ -34,7 +60,7 @@ export default async function crawl(domain, depth = 5, filterFn) {
   // Scrape main url
   const mainPage = await axios.get(url);
 
-  const allLinks = await queueLinks(domain, mainPage, filterFn);
+  const allLinks = await queueLinks(mainPage, filterFn);
   let links = new Set([...allLinks]);
 
   for (let i = 1; i < depth; ++i) {
@@ -64,28 +90,3 @@ export default async function crawl(domain, depth = 5, filterFn) {
   return allLinks;
 }
 
-/**
- * queueLinks - parses page content and appends all links on the page to existing queue.
- *
- * @param {object} pageContent html string holding the content of the page to
- * be parsed
- * @param {set} existingQueue a set of existing links that new links will be
- *  added to.  Queue should be a set.
- */
-export function queueLinks(domain, pageContent, filterFn) {
-  if (pageContent.status == 200) {
-    const links = cheerio.load(pageContent.data)('a');
-    return new Set(Object.keys(links)
-      .map((n) => {
-        if (links[n].attribs) {
-          return links[n].attribs.href;
-        }
-        return null;
-      })
-      .filter(url => typeof url === 'string')
-      .filter(filterFn)
-      .map(url => url.replace(/^https/, 'http')));
-  }
-  console.log(Error(`Website returned an error: ${pageContent.status}`));
-  return new Set();
-}
