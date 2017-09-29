@@ -17,18 +17,6 @@ const chromeDriver = require('selenium-webdriver/chrome');
 const webDriver = require('selenium-webdriver');
 
 /**
- * saveReports - output the results of axe-core's test to HTML and JSON formats
- *
- * @param {object} results
- */
-function saveReports(results) {
-  console.log('Creating reports: ', `${OUTPUT}.json`, `${OUTPUT}.html`);
-  const reports = results.reduce(resultsToReports, {});
-  outputToJSON(`${OUTPUT}.json`, reports);
-  outputToHTML(`${OUTPUT}.html`, reports);
-}
-
-/**
  * resultsToReports - function applied by Array.prototype.reduce to array of results to combine for
  *                    printing to reports
  *
@@ -51,6 +39,22 @@ function resultsToReports(reports, { result, view }) {
     console.log(err);
   }
   return reports;
+}
+
+/**
+ * generateReportSaveFn - output the results of axe-core's test to HTML and
+ * JSON formats
+ *
+ * @param {object} globalOptions
+ * @returns {fn} callback function to print results of axe-core tests.
+ */
+function generateReportSaveFn({ output }) {
+  return (results) => {
+    console.log('Creating reports: ', `${output}.json`, `${output}.html`);
+    const reports = results.reduce(resultsToReports, {});
+    outputToJSON(`${output}.json`, reports);
+    outputToHTML(`${output}.html`, reports);
+  };
 }
 
 /**
@@ -125,7 +129,7 @@ async function main() {
     .reduce(createURLViewReducer(opts), [])
     .slice(0, opts.check)
     .map(testPage))
-    .then(saveReports)
+    .then(generateReportSaveFn(opts))
     .catch(console.log);
 }
 
