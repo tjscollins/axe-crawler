@@ -54,13 +54,13 @@ function resultsToReports(reports, { result, view }) {
 }
 
 /**
- * urlForEachView - generates a callback function for used to reduce list of
- * urls into list of {url, viewPort} combinations
+ * createURLViewReducer - generates a callback function for used to reduce list
+ * of urls into list of {url, viewPort} combinations
  *
  * @param {object} globalOptions
  * @returns {fn} callback function for reduce
  */
-function urlForEachView(globalOptions) {
+function createURLViewReducer(globalOptions) {
   return (links, url) => {
     globalOptions.viewPorts.forEach((view) => {
       links.push({ url, view });
@@ -122,7 +122,7 @@ async function main() {
 
   // Test each link
   Promise.all([...linkQueue]
-    .reduce(urlForEachView(opts), [])
+    .reduce(createURLViewReducer(opts), [])
     .slice(0, opts.check)
     .map(testPage))
     .then(saveReports)
