@@ -71,18 +71,29 @@ function createURLViewReducer(globalOptions) {
 }
 
 /**
- * testPage - runs axe-core tests on a page at the supplied url.  Returns the results of that test.
+ * testPage - runs axe-core tests for supplied testCase.  Returns the results
+ *  of that test.
  *
- * @param {string} url address of the page to be tested with axe-core
+ * @param {Object} testCase
+ * @param {string} testCase.url url of the testCase
+ * @param {Object} testCase.viewPort
+ * @param {string} testCase.viewPort.name name of this viewPort (e.g. mobile or
+ *  desktop)
+ * @param {number} testCase.viewPort.width
+ * @param {number} testCase.viewPort.height
  */
-async function testPage({ url, viewPort }) {
+async function testPage(testCase) {
+  const { url, viewPort: { name, width, height } } = testCase;
   const options = new chromeDriver.Options();
-  options.addArguments('headless', 'disable-gpu', `--window-size=${viewPort.width},${viewPort.height}`);
-  const driver = new webDriver.Builder().forBrowser('chrome').setChromeOptions(options).build();
+  options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
+  const driver = new webDriver.Builder()
+    .forBrowser('chrome')
+    .setChromeOptions(options)
+    .build();
   let outputReport = null;
   await driver.get(url)
     .then(() => {
-      console.log('Testing: ', url, viewPort.name);
+      console.log('Testing: ', url, name);
       axeBuilder(driver)
         .analyze((results) => {
           outputReport = results;
@@ -90,7 +101,7 @@ async function testPage({ url, viewPort }) {
     }).then(() => driver.close());
   return {
     result: outputReport,
-    viewPort,
+    viewPort: testCase.viewPort,
   };
 }
 
@@ -101,8 +112,8 @@ function filterLinks(domain) {
 }
 
 /**
- * main - main function to start scraping the website, build the queue of individual pages
- *        and run axe tests on each page
+ * main - main function to start scraping the website, build the queue of
+ *  individual pages and run axe tests on each page
  *
  * @param {string} url homepage of website to be scraped and tested.
  */
