@@ -37,9 +37,35 @@ const DEFAULT_OPTS = {
   ],
 };
 
+/**
+ * parseViewPortsArg - uses a regex to parse a cmd line argument giving custom
+ * viewPorts to be tested
+ *
+ * @param {string} views value from cmd line option --viewPorts mobile:360x640,
+ * tablet:768x1024 for example.
+ */
+function parseViewPortsArg(views) {
+  return views.split(',')
+    .map((view) => {
+      const parser = /(\w+):(\d+)x(\d+)/;
+      try {
+        const [, name, width, height] = parser.exec(view);
+        return { name, width, height };
+      } catch (err) {
+        throw new Error('Invalid viewports: ', views);
+      }
+    }).filter(view => view);
+}
+
 export default function crawlerOpts(file) {
   const argv = minimist(process.argv.slice(2));
   argv.domains = argv._;
+  if (argv.viewPorts) {
+    argv.viewPorts = parseViewPortsArg(argv.viewPorts);
+    if (argv.viewPorts.length === 0) {
+      delete argv.viewPorts;
+    }
+  }
 
   const optsFile = file || DEFAULT_FILE;
   try {
