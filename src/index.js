@@ -54,21 +54,19 @@ function resultsToReports(reports, { result, view }) {
 }
 
 /**
- * urlForEachView - function applied by Array.prototype.reduce to array of urls to return array of
- *                  {url, view} for each view in VIEWPORTS
+ * urlForEachView - generates a callback function for used to reduce list of
+ * urls into list of {url, viewPort} combinations
  *
- * @param {array} links
- * @param {string} url
- * @returns {array} accumulator array
+ * @param {object} globalOptions
+ * @returns {fn} callback function for reduce
  */
-function urlForEachView(links, url) {
-  VIEWPORTS.forEach((view) => {
-    links.push({
-      url,
-      view,
+function urlForEachView(globalOptions) {
+  return (links, url) => {
+    globalOptions.viewPorts.forEach((view) => {
+      links.push({ url, view });
     });
-  });
-  return links;
+    return links;
+  };
 }
 
 /**
@@ -124,7 +122,7 @@ async function main() {
 
   // Test each link
   Promise.all([...linkQueue]
-    .reduce(urlForEachView, [])
+    .reduce(urlForEachView(opts), [])
     .slice(0, opts.check)
     .map(testPage))
     .then(saveReports)
