@@ -77,6 +77,15 @@ export function outputToHTML(file, reports) {
     return body += '</ul>';
   }
 
+  function printViolation(list, view) {
+    return ({ impact, description, nodes }) => {
+      list += `<li>${impact.toUpperCase()}: ${escape(description)}<br />`;
+      list += '';
+      list += `<span>${view.toUpperCase()} Affected Nodes: </span><ul>`;
+      list += nodes.reduce(writeNodeMessages, '');
+      list += '</ul></li>';
+    };
+  }
 
   try {
     body += `${marked(`## Summary of Violations: ${
@@ -94,20 +103,9 @@ export function outputToHTML(file, reports) {
     body = printViewCounts(body, report, 'violations');
 
     if (violationCount !== 0) {
-      let list = '<ol>';
+      const list = '<ol>';
       Object.entries(report.violations).forEach(([view, violations]) => {
-        violations.forEach(({
-          impact,
-          description,
-          nodes,
-        }) => {
-          list += `<li>${impact.toUpperCase()}: ${escape(description)}<br />`;
-          list += '';
-
-          list += `<span>${view.toUpperCase()} Affected Nodes: </span><ul>`;
-          list += nodes.reduce(writeNodeMessages, '');
-          list += '</ul></li>';
-        });
+        violations.forEach(printViolation(list, view));
       });
       body += `${list}</ol>`;
     }
@@ -132,18 +130,17 @@ export function outputToHTML(file, reports) {
 
     if (passesCount !== 0) {
       Object.entries(report.passes).forEach(([view, passes]) => {
-        let list = '<br/><ol><br/>';
-        passes.forEach(({
+        const list = `<br/><ol><br/>${passes.reduce((list, {
           description,
           nodes,
         }) => {
           list += `<li>${escape(description)}<br />`;
           list += `<span>${view.toUpperCase()} Affected Nodes: <span><ul>`;
           list += nodes.reduce(writeNodeMessages, '');
-          list += '</ul></li>';
-        });
+          return list += '</ul></li>';
+        })}`;
         body += `${list}</ol>`;
-      });
+      }, '');
     }
   });
   body += '</div></div>';
