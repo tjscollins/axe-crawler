@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { isURL } from 'validator';
 import webDriver from 'selenium-webdriver';
 import chromeDriver from 'selenium-webdriver/chrome';

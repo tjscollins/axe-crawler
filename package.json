@@ -4,7 +4,7 @@
   "description": "A website crawler meant to automatically test a website for accessibility issues using the axe-core library",
   "main": "dist/index.js",
   "scripts": {
-    "build": "node_modules/babel-cli/bin/babel.js src/index.js > dist/axe-crawler.js",
+    "build": "node_modules/rollup/bin/rollup -c rollup.config.js",
     "test": "jest"
   },
   "author": "Tyler Collins",
@@ -23,7 +23,9 @@
   "devDependencies": {
     "babel": "^6.23.0",
     "babel-cli": "^6.26.0",
+    "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.6.0",
+    "babel-preset-es2015": "^6.24.1",
     "eslint": "^4.7.2",
     "eslint-config-airbnb-base": "^12.0.1",
     "eslint-plugin-import": "^2.7.0",
@@ -33,13 +35,20 @@
     "jest": "^21.2.1",
     "mocha": "^3.5.3",
     "moxios": "^0.4.0",
+    "rollup": "^0.50.0",
+    "rollup-plugin-babel": "^3.0.2",
     "sinon": "^4.0.0",
     "webpack": "^3.6.0",
     "webpack-stream": "^3.2.0"
   },
   "jest": {
     "collectCoverage": true,
-    "collectCoverageFrom": ["**/src/**/*.js"],
-    "coveragePathIgnorePatterns": ["/node_modules/", "/__tests__/"]
+    "collectCoverageFrom": [
+      "**/src/**/*.js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/__tests__/"
+    ]
   }
 }
