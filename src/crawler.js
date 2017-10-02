@@ -11,6 +11,22 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 
 /**
+ * getHref -- helper function to pull the href attribute off a DOM
+ * node
+ *
+ * @param {DOMNode[]} links
+ * @returns {string|null}
+ */
+function getHref(links) {
+  return (key) => {
+    if (links[key].attribs) {
+      return links[key].attribs.href;
+    }
+    return null;
+  };
+}
+
+/**
  * queueLinks - parses page content and appends all links on the page to existing queue.
  *
  * @param {Promise} pageContent axios response containing page data to be
@@ -18,22 +34,36 @@ import cheerio from 'cheerio';
  * @param {Function} filterFn function to be used to filter out urls (e.g.
  * removeMedia, noFTP, etc.)
  */
-export function queueLinks(pageContent, filterFn) {
+export function queueLinks(pageContent, filterFn = x => true) {
   if (pageContent.status === 200) {
     const links = cheerio.load(pageContent.data)('a');
+
     return new Set(Object.keys(links)
-      .map((n) => {
-        if (links[n].attribs) {
-          return links[n].attribs.href;
-        }
-        return null;
-      })
+      .map(getHref(links))
       .filter(url => typeof url === 'string')
       .filter(filterFn)
       .map(url => url.replace(/^https/, 'http')));
   }
   console.log(Error(`Website returned an error: ${pageContent.status}`));
   return new Set();
+}
+
+/**
+ * combineLinkSets - helper function that reduces an array of sets to a single
+ * set.
+ *
+ * @param {Set<string>} urlList
+ * @param {Set<string>} urlSet
+ * @returns {Set<string>}
+ */
+export function combineLinkSets(urlList, urlSet) {
+  if (urlList instanceof Set) {
+    for (const address of urlList) {
+      urlSet.add(address);
+    }
+    return urlSet;
+  }
+  return urlSet;
 }
 
 /**
@@ -64,28 +94,20 @@ export default async function crawl(domain, depth = 5, filterFn) {
   const allLinks = await queueLinks(mainPage, filterFn);
   let links = new Set([...allLinks]);
 
-  for (let i = 1; i < depth; ++i) {
-    if (links.size == 0) {
+  for (let i = 1; i < depth; i += 1) {
+    const linkedContent = await Promise.all([...links]
+      .map(axios.get));
+
+    links = linkedContent
+      .map(newPage => queueLinks(newPage, filterFn))
+      .reduce(combineLinkSets, new Set([]))
+      .difference(allLinks);
+    if (links.size === 0) {
       i = depth;
     }
-    const newLinks = await Promise.all([...links].map(async (url) => {
-      const newPage = await axios.get(url);
-      return queueLinks(newPage, filterFn);
-    }));
 
-    const newLinkSet = newLinks
-      .reduce((urlList, urlSet) => {
-        if (urlList instanceof Set) {
-          for (const url of urlList) {
-            urlSet.add(url);
-          }
-          return urlSet;
-        }
-        return urlSet;
-      }, new Set([]));
-    links = newLinkSet.difference(allLinks);
-    for (const url of newLinkSet) {
-      allLinks.add(url);
+    for (const address of links) {
+      allLinks.add(address);
     }
   }
   return allLinks;
