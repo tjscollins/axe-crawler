@@ -1,4 +1,5 @@
-node_modules
-.vscode/settings.json
+node_modules/
+.vscode/
 reports.html
 reports.json
+coverage/
