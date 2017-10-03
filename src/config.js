@@ -16,28 +16,29 @@ const DEFAULT_OPTS = {
   depth: 5,
   check: undefined, // undefined => check all
   output: 'reports',
-  viewPorts: [{
-    name: 'mobile',
-    width: 360,
-    height: 640,
-  },
-  {
-    name: 'tablet_vertical',
-    width: 768,
-    height: 1024,
-  },
-  {
-    name: 'tablet_horizontal',
-    width: 1024,
-    height: 768,
-  },
-  {
-    name: 'desktop',
-    width: 1440,
-    height: 900,
-  },
+  viewPorts: [
+    {
+      name: 'mobile',
+      width: 360,
+      height: 640,
+    },
+    {
+      name: 'tablet_vertical',
+      width: 768,
+      height: 1024,
+    },
+    {
+      name: 'tablet_horizontal',
+      width: 1024,
+      height: 768,
+    },
+    {
+      name: 'desktop',
+      width: 1440,
+      height: 900,
+    },
   ],
-  verbose: false,
+  verbose: 'error',
 };
 
 /**
@@ -54,7 +55,11 @@ function parseViewPortsArg(views) {
       const parser = /(\w+):(\d+)x(\d+)/;
       try {
         const [, name, width, height] = parser.exec(view);
-        return { name, width, height };
+        return {
+          name,
+          width,
+          height,
+        };
       } catch (err) {
         throw new Error('Invalid viewports: ', views);
       }
@@ -78,8 +83,15 @@ export default function crawlerOpts() {
     }
   }
 
-  if (argv.hasOwnProperty('verbose')) {
-    argv.verbose = true;
+  if (argv.verbose) {
+    process.verbose = argv.verbose;
+  }
+
+  if (argv.hasOwnProperty('quiet')) {
+    delete argv.verbose;
+    process.quiet = true;
+  } else {
+    process.quiet = false;
   }
 
   const optsFile = argv.configFile || DEFAULT_FILE;
@@ -90,8 +102,8 @@ export default function crawlerOpts() {
     if (err.code === 'ENOENT' && err.path === optsFile) {
       logger.error('No config file found');
     } else if (err instanceof SyntaxError) {
-      logger.error(`Invalid JSON config file ${optsFile}`);
-      logger.error('Ignoring JSON config file...');
+      console.error(`Invalid JSON config file ${optsFile}`);
+      console.error('Ignoring JSON config file...');
     }
   }
   return Object.assign(DEFAULT_OPTS, jsonOpts, argv);

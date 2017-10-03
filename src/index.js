@@ -46,7 +46,7 @@ function resultsToReports(reports, { result, viewPort }) {
  */
 function generateReportSaveFn({ output }) {
   return (results) => {
-    logger.info('Creating reports: ', `${output}.json`, `${output}.html`);
+    logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
     const reports = results.reduce(resultsToReports, {});
     outputToJSON(`${output}.json`, reports);
     outputToHTML(`${output}.html`, reports);
@@ -96,6 +96,7 @@ async function testPage(testCase) {
       axeBuilder(driver)
         .analyze((results) => {
           outputReport = results;
+          logger.debug(`Results for ${url} received`);
         });
     }).then(() => driver.close());
   return {
@@ -123,14 +124,14 @@ async function main() {
   process.verbose = opts.verbose;
 
   // Create Queue of links on main page
-  logger.info(`Crawling ${domain} to depth of:  ${opts.depth}`);
+  logger.debug(`Crawling ${domain} to depth of:  ${opts.depth}`);
   const linkQueue = await crawl(domain, opts.depth, filterLinks(domain));
 
   logger.info(`Found ${linkQueue.size} links within ${domain}`);
-  logger.info('Total urls to test:', Math.min(opts.check, linkQueue.size));
-  logger.info(`Testing ${opts.viewPorts.length} views: `);
+  logger.debug('Total urls to test:', Math.min(opts.check, linkQueue.size));
+  logger.debug(`Testing ${opts.viewPorts.length} views: `);
   opts.viewPorts.forEach((viewPort) => {
-    logger.info(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
+    logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
   });
 
   // Test each link

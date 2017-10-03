@@ -5,6 +5,16 @@
  * @license MIT
  */
 
+/**
+ * debug -- pass to console.log if process.verbose
+ *
+ * @param {any[]} args
+ */
+function debug(...args) {
+  if (process.verbose === 'debug' && !process.quiet) {
+    console.log(...args);
+  }
+}
 
 /**
  * info -- pass to console.log if process.verbose
@@ -12,7 +22,7 @@
  * @param {any[]} args
  */
 function info(...args) {
-  if (process.verbose) {
+  if (!process.quiet && (process.verbose === 'info' || process.verbose === 'debug')) {
     console.log(...args);
   }
 }
@@ -23,7 +33,8 @@ function info(...args) {
  * @param {any[]} args
  */
 function error(...args) {
-  if (process.verbose) {
+  console.log('Error logger called', process.verbose);
+  if (process.verbose !== undefined && !process.quiet) {
     console.error(...args);
   }
 }
