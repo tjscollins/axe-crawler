@@ -4,7 +4,7 @@
   "description": "A website crawler meant to automatically test a website for accessibility issues using the axe-core library",
   "main": "dist/index.js",
   "scripts": {
-    "build": "node_modules/rollup/bin/rollup -c rollup.config.js",
+    "build": "NODE_ENV=production node_modules/rollup/bin/rollup -c rollup.config.js",
     "test": "jest"
   },
   "author": "Tyler Collins",

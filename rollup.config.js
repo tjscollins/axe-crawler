@@ -6,22 +6,7 @@ export default {
   input: 'src/index.js', // required
   // external,
   plugins: [
-    babel({
-      babelrc: false,
-      presets: [
-        ['env',
-          {
-            targets: {
-              node: '6.11.1',
-            },
-            modules: false,
-          },
-        ],
-      ],
-      plugins: [
-        'external-helpers',
-      ],
-    }),
+    babel(),
   ],
 
   // advanced input options
