@@ -76,7 +76,7 @@ export function outputToHTML(file, reports) {
 
   function listTestResults([view, results]) {
     if (results.length > 0) {
-      const list = `<span>${view.toUpperCase()}</span><br/><ol>${results.reduce((item, {
+      const list = `<h4>${view.toUpperCase()}</h4><br/><ol>${results.reduce((item, {
         description,
         nodes,
         impact,

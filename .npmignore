@@ -1,0 +1,5 @@
+.vscode/
+reports.html
+reports.json
+coverage/
+npm-debug.log

@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('validator'), require('selenium-webdriver'), require('selenium-webdriver/chrome'), require('axe-webdriverjs'), require('axios'), require('cheerio')) :
-	typeof define === 'function' && define.amd ? define(['validator', 'selenium-webdriver', 'selenium-webdriver/chrome', 'axe-webdriverjs', 'axios', 'cheerio'], factory) :
-	(factory(global.validator,global.webDriver,global.chromeDriver,global.axeBuilder,global.axios,global.cheerio));
-}(this, (function (validator,webDriver,chromeDriver,axeBuilder,axios,cheerio) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('validator'), require('selenium-webdriver'), require('selenium-webdriver/chrome'), require('axe-webdriverjs'), require('fs'), require('marked'), require('escape-html'), require('axios'), require('cheerio')) :
+	typeof define === 'function' && define.amd ? define(['validator', 'selenium-webdriver', 'selenium-webdriver/chrome', 'axe-webdriverjs', 'fs', 'marked', 'escape-html', 'axios', 'cheerio'], factory) :
+	(factory(global.validator,global.webDriver,global.chromeDriver,global.axeBuilder,global.fs,global.marked,global.escape,global.axios,global.cheerio));
+}(this, (function (validator,webDriver,chromeDriver,axeBuilder,fs,marked,escape,axios,cheerio) { 'use strict';
 
 webDriver = webDriver && webDriver.hasOwnProperty('default') ? webDriver['default'] : webDriver;
 chromeDriver = chromeDriver && chromeDriver.hasOwnProperty('default') ? chromeDriver['default'] : chromeDriver;
 axeBuilder = axeBuilder && axeBuilder.hasOwnProperty('default') ? axeBuilder['default'] : axeBuilder;
+fs = fs && fs.hasOwnProperty('default') ? fs['default'] : fs;
+marked = marked && marked.hasOwnProperty('default') ? marked['default'] : marked;
+escape = escape && escape.hasOwnProperty('default') ? escape['default'] : escape;
 axios = axios && axios.hasOwnProperty('default') ? axios['default'] : axios;
 cheerio = cheerio && cheerio.hasOwnProperty('default') ? cheerio['default'] : cheerio;
 
@@ -84,15 +87,58 @@ function polyfills() {
 }
 
 /**
+ * @fileOverview Log based on configured verbosity
+ * @name logger.js
+ * @author Tyler Collins
+ * @license MIT
+ */
+
+/**
+ * debug -- pass to console.log if process.verbose
+ *
+ * @param {any[]} args
+ */
+function debug(...args) {
+  if (process.verbose === 'debug' && !process.quiet) {
+    console.log(...args);
+  }
+}
+
+/**
+ * info -- pass to console.log if process.verbose
+ *
+ * @param {any[]} args
+ */
+function info(...args) {
+  if (!process.quiet && (process.verbose === 'info' || process.verbose === 'debug')) {
+    console.log(...args);
+  }
+}
+
+/**
+ * error -- pass to console.error if process.verbose
+ *
+ * @param {any[]} args
+ */
+function error(...args) {
+  console.log('Error logger called', process.verbose);
+  if (process.verbose !== undefined && !process.quiet) {
+    console.error(...args);
+  }
+}
+
+var logger = {
+  info,
+  error,
+  debug
+};
+
+/**
  * @fileOverview Generate output reports from axe-crawler data
  * @name output.js
  * @author Tyler Collins
  * @license MIT
  */
-
-const fs = require('fs');
-const marked = require('marked');
-const escape = require('escape-html');
 
 function outputToJSON(file, reports) {
   const formattedJSON = JSON.stringify(reports, null, 2);
@@ -106,7 +152,7 @@ function outputToJSON(file, reports) {
  */
 function outputToHTML(file, reports) {
   let head = '<!doctype html> <html lang="en"><head>';
-  head += `<title>aXe Accessibility Engine Report${new Date().toDateString()}</title>`;
+  head += `<title>aXe Accessibility Engine Report ${new Date().toDateString()}</title>`;
   head += '<meta name="viewport" content="width=device-width, initial-scale=1">';
   head += '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.8.0/github-markdown.css">';
   head += '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">';
@@ -114,120 +160,90 @@ function outputToHTML(file, reports) {
 
   let body = '</head><body><div class="container"><div class="row"><div class="col-xs-12">';
   body += marked(`# aXe Accessibility Engine Report ${new Date().toDateString()}`);
-  body += `${marked('This report should is not a complete accessibility audit.  This report only documents those accessibility features tested by the axe-core library, and should not be considered exhaustive of the possible accessibility issues a website may have.  More information regarding the features tested by the axe-core library may be found at [axe-core.org](https://axe-core.org/)')}</div></div>`;
+  body += `${marked('This report is not a complete accessibility audit.  This report only documents those accessibility features tested by the axe-core library, and should not be considered exhaustive of the possible accessibility issues a website may have.  Use this report as a tool in a complete and comprehensive process of reviewing this site for accessibility issues.  More information regarding the features tested by the axe-core library may be found at [axe-core.org](https://axe-core.org/)')}</div></div>`;
   body += '<div class="row"><div class="col-xs-12">';
 
-  //   console.log(reports);
-
-  function countViolations(report) {
-    return Object.entries(report.violations).reduce((sum, [viewName, result]) => sum + result.length, 0);
-  }
-
-  function countPasses(report) {
-    return Object.entries(report.passes).reduce((sum, [viewName, result]) => sum + result.length, 0);
+  function countResults(report, type) {
+    return Object.entries(report[type]).reduce((sum, [viewName, result]) => sum + result.length, 0);
   }
 
   function writeNodeMessages(list, {
-    html,
-    any,
-    all,
-    none
+    html, any, all, none
   }) {
     /* eslint-disable no-param-reassign */
     list += `<li>${escape(html)}`;
-    any.forEach(({
-      message
-    }) => {
+    any.forEach(({ message }) => {
       list += `<br />${escape(message)}`;
     });
-    all.forEach(({
-      message
-    }) => {
+    all.forEach(({ message }) => {
       list += `<br />${escape(message)}`;
     });
-    none.forEach(({
-      message
-    }) => {
+    none.forEach(({ message }) => {
       list += `<br />${escape(message)}`;
     });
     list += '</li>';
     return list;
     /* eslint-enable no-param-reassign */
   }
-  function printViewCounts(body, report, reportType) {
+
+  function printViewCounts(report, reportType) {
     body += '<ul>';
     Object.entries(report[reportType]).forEach(([view, results]) => {
       body += `<li style="list-style: none; height: 15px;"><div class="col-xs-2">${view}:</div><div class="col-xs-10"> ${results.length} ${reportType}</div></li>`;
     });
-    return body += '</ul>';
-  }
-
-  function printViolation(list, view) {
-    return ({ impact, description, nodes }) => {
-      list += `<li>${impact.toUpperCase()}: ${escape(description)}<br />`;
-      list += '';
-      list += `<span>${view.toUpperCase()} Affected Nodes: </span><ul>`;
-      list += nodes.reduce(writeNodeMessages, '');
-      list += '</ul></li>';
-    };
+    body += '</ul>';
   }
 
   try {
-    body += `${marked(`## Summary of Violations: ${Object.entries(reports).reduce((total, [url, report]) => total + countViolations(report), 0)} total violations`)}</div></div>`;
+    body += `${marked(`## Summary of Violations: ${Object.entries(reports).reduce((total, [url, report]) => total + countResults(report, 'violations'), 0)} total violations`)}</div></div>`;
   } catch (err) {
-    console.log('Error:', err);
+    logger.error('Error counting violated tests: ', err);
     body += marked('## Summary of Violations');
   }
   body += '<div class="row"><div class="col-xs-12">';
-  Object.entries(reports).forEach(([url, report]) => {
-    const violationCount = countViolations(report);
 
-    body += marked(`### ${escape(url)} ${violationCount} violations`);
-
-    body = printViewCounts(body, report, 'violations');
-
-    if (violationCount !== 0) {
-      const list = '<ol>';
-      Object.entries(report.violations).forEach(([view, violations]) => {
-        violations.forEach(printViolation(list, view));
-      });
+  function listTestResults([view, results]) {
+    if (results.length > 0) {
+      const list = `<h4>${view.toUpperCase()}</h4><br/><ol>${results.reduce((item, {
+        description,
+        nodes,
+        impact
+      }) => {
+        item += `<li>${impact ? `${impact.toUpperCase()}: ` : ''}${escape(description)}<br />`;
+        item += '<span>Affected Nodes: </span><ul>';
+        item += nodes.reduce(writeNodeMessages, '');
+        return item += '</ul></li>';
+      }, '')}`;
       body += `${list}</ol>`;
     }
+  }
+
+  Object.entries(reports).forEach(([url, report]) => {
+    const violationCount = countResults(report, 'violations');
+    body += marked(`### ${escape(url)} ${violationCount} violations`);
+    printViewCounts(report, 'violations');
+    body += '<br/>';
+    Object.entries(report.violations).forEach(listTestResults, '');
   });
 
   try {
-    body += `${marked(`## Summary of Passing Tests: ${Object.entries(reports).reduce((total, [url, report]) => total + countPasses(report), 0)} total passing tests`)}</div></div>`;
+    body += `${marked(`## Summary of Passing Tests: ${Object.entries(reports).reduce((total, [url, report]) => total + countResults(report, 'passes'), 0)} total passing tests`)}</div></div>`;
   } catch (err) {
-    console.log('Error:', err);
+    logger.error('Error counting passed tests: ', err);
     body += marked('## Summary of Passing Tests');
   }
 
   Object.entries(reports).forEach(([url, report]) => {
-    // console.log(report);
-    const passesCount = countPasses(report);
-
+    const passesCount = countResults(report, 'passes');
     body += marked(`### ${escape(url)} ${passesCount} passes`);
-
-    body = printViewCounts(body, report, 'passes');
-
-    if (passesCount !== 0) {
-      Object.entries(report.passes).forEach(([view, passes]) => {
-        const list = `<br/><ol><br/>${passes.reduce((list, {
-          description,
-          nodes
-        }) => {
-          list += `<li>${escape(description)}<br />`;
-          list += `<span>${view.toUpperCase()} Affected Nodes: <span><ul>`;
-          list += nodes.reduce(writeNodeMessages, '');
-          return list += '</ul></li>';
-        })}`;
-        body += `${list}</ol>`;
-      }, '');
-    }
+    printViewCounts(report, 'passes');
+    body += '<br />';
+    Object.entries(report.passes).forEach(listTestResults, '');
   });
+
   body += '</div></div>';
 
-  const foot = '<div></body><script></script></html>';
+  const foot = '</body><script></script></html>';
 
   fs.writeFile(file, head + body + foot);
 }
@@ -499,7 +515,7 @@ var crawl = (() => {
 const fs$1 = require('fs');
 const minimist = require('minimist');
 
-const DEFAULT_FILE = '.axecrawlerrc';
+const DEFAULT_FILE = '.axe-crawler.json';
 
 const DEFAULT_OPTS = {
   depth: 5,
@@ -521,7 +537,8 @@ const DEFAULT_OPTS = {
     name: 'desktop',
     width: 1440,
     height: 900
-  }]
+  }],
+  verbose: 'error'
 };
 
 /**
@@ -537,7 +554,11 @@ function parseViewPortsArg(views) {
     const parser = /(\w+):(\d+)x(\d+)/;
     try {
       const [, name, width, height] = parser.exec(view);
-      return { name, width, height };
+      return {
+        name,
+        width,
+        height
+      };
     } catch (err) {
       throw new Error('Invalid viewports: ', views);
     }
@@ -549,10 +570,9 @@ function parseViewPortsArg(views) {
  * options into single global options object
  *
  * @export
- * @param {string} file filename of config file
  * @returns {Object} globalOptions object
  */
-function crawlerOpts(file) {
+function crawlerOpts() {
   const argv = minimist(process.argv.slice(2));
   argv.domains = argv._;
   if (argv.viewPorts) {
@@ -562,15 +582,30 @@ function crawlerOpts(file) {
     }
   }
 
-  const optsFile = file || DEFAULT_FILE;
+  if (argv.verbose) {
+    process.verbose = argv.verbose;
+  }
+
+  if (argv.hasOwnProperty('quiet')) {
+    delete argv.verbose;
+    process.quiet = true;
+  } else {
+    process.quiet = false;
+  }
+
+  const optsFile = argv.configFile || DEFAULT_FILE;
+  let jsonOpts = {};
   try {
-    return Object.assign(DEFAULT_OPTS, JSON.parse(fs$1.readFileSync(optsFile)), argv);
+    jsonOpts = JSON.parse(fs$1.readFileSync(optsFile));
   } catch (err) {
     if (err.code === 'ENOENT' && err.path === optsFile) {
-      return Object.assign(DEFAULT_OPTS, argv);
+      logger.error('No config file found');
+    } else if (err instanceof SyntaxError) {
+      console.error(`Invalid JSON config file ${optsFile}`);
+      console.error('Ignoring JSON config file...');
     }
-    throw err;
   }
+  return Object.assign(DEFAULT_OPTS, jsonOpts, argv);
 }
 
 /**
@@ -593,9 +628,10 @@ let testPage = (() => {
     const driver = new webDriver.Builder().forBrowser('chrome').setChromeOptions(options).build();
     let outputReport = null;
     yield driver.get(url).then(function () {
-      console.log('Testing: ', url, name);
+      logger.info('Testing: ', url, name);
       axeBuilder(driver).analyze(function (results) {
         outputReport = results;
+        logger.debug(`Results for ${url} received`);
       });
     }).then(function () {
       return driver.close();
@@ -622,20 +658,21 @@ let main = (() => {
     // Read config
     const opts = crawlerOpts();
     const domain = opts.domains.pop();
+    process.verbose = opts.verbose;
 
     // Create Queue of links on main page
-    console.log(`Crawling ${domain} to depth of:  ${opts.depth}`);
+    logger.debug(`Crawling ${domain} to depth of:  ${opts.depth}`);
     const linkQueue = yield crawl(domain, opts.depth, filterLinks(domain));
 
-    console.log(`Found ${linkQueue.size} links within ${domain}`);
-    console.log('Total urls to test:', Math.min(opts.check, linkQueue.size));
-    console.log(`Testing ${opts.viewPorts.length} views: `);
+    logger.info(`Found ${linkQueue.size} links within ${domain}`);
+    logger.debug('Total urls to test:', Math.min(opts.check, linkQueue.size));
+    logger.debug(`Testing ${opts.viewPorts.length} views: `);
     opts.viewPorts.forEach(function (viewPort) {
-      console.log(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
+      logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
     });
 
     // Test each link
-    Promise.all([...linkQueue].reduce(createURLViewReducer(opts), []).slice(0, opts.check * opts.viewPorts.length).map(testPage)).then(generateReportSaveFn(opts)).catch(console.log);
+    Promise.all([...linkQueue].reduce(createURLViewReducer(opts), []).slice(0, opts.check * opts.viewPorts.length).map(testPage)).then(generateReportSaveFn(opts)).catch(logger.info);
   });
 
   return function main() {
@@ -644,8 +681,8 @@ let main = (() => {
 })();
 
 /**
- * resultsToReports - function applied by Array.prototype.reduce to array of results to combine for
- *                    printing to reports
+ * resultsToReports - function applied by Array.prototype.reduce to array of
+ * results to combine for printing to reports
  *
  * @param {Object} reports
  * @param {Object} result
@@ -665,7 +702,7 @@ function resultsToReports(reports, { result, viewPort }) {
 
     /* eslint-enable no-param-reassign */
   } catch (err) {
-    console.log(err);
+    logger.error(err);
   }
   return reports;
 }
@@ -679,7 +716,7 @@ function resultsToReports(reports, { result, viewPort }) {
  */
 function generateReportSaveFn({ output }) {
   return results => {
-    console.log('Creating reports: ', `${output}.json`, `${output}.html`);
+    logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
     const reports = results.reduce(resultsToReports, {});
     outputToJSON(`${output}.json`, reports);
     outputToHTML(`${output}.html`, reports);

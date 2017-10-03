@@ -7,6 +7,9 @@
     "build": "NODE_ENV=production node_modules/rollup/bin/rollup -c rollup.config.js",
     "test": "jest"
   },
+  "bin": {
+    "axe-crawler": "bin/axe-crawler"
+  },
   "author": "Tyler Collins",
   "license": "MIT",
   "dependencies": {

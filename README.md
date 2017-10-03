@@ -23,13 +23,15 @@ then axe-crawler will parse `http://mydomain.org` for all links it finds and bui
 
 By default, axe-crawler ignores links that end in common media or document extensions (.mp3, .avi, .pdf, .docx, etc.)
 
-When it reaches crawls through the domain to the specified depth (default: 5), or when it stops finding new links, it then uses selenium and axe-core to open a browser and test each link in the queue for accessibility at each specified viewPort resolution (default: mobile, tablet_vertical, tablet_horizontal, and desktop).  This means that each url will be visited a total of once + the number of viewPorts specified (default: 5 times).  In order to avoid overloading servers the selenium driven requests are done synchronously rather than asynchronously.
+When axe-crawler finishes crawling through the domain to the specified depth (default: 5), or when it stops finding new links, it then uses selenium, chrome-driver, and axe-core to open a headless Chrome browser and test each link in the queue for accessibility at each specified viewPort resolution (default: mobile, tablet_vertical, tablet_horizontal, and desktop).
+
+Each url found will be visited a total of once + the number of viewPorts specified (default: 5 times total).  In order to avoid overloading servers the selenium driven requests are done synchronously rather than asynchronously.
 
 ***Please be considerate in your use of this or any web scraping tool.  Don't point it at other people's domains without permission.  It is recommended to use this tool on testing/staging servers rather than production servers for obvious reasons.***
 
 ## Configuration
 
-Most paramters of axe-crawler are configurable at the command line or with a JSON config file named `.axe-crawler.json` in the current directory.
+Most parameters of axe-crawler are configurable at the command line or with a JSON config file named `.axe-crawler.json` in the current directory.
 
 ### Command Line Options
 
