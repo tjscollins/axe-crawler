@@ -11,8 +11,8 @@ import crawlerOpts from './config';
 import logger from './logger';
 
 /**
- * resultsToReports - function applied by Array.prototype.reduce to array of results to combine for
- *                    printing to reports
+ * resultsToReports - function applied by Array.prototype.reduce to array of
+ * results to combine for printing to reports
  *
  * @param {Object} reports
  * @param {Object} result
