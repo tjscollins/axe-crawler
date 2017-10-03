@@ -96,7 +96,7 @@ export function outputToHTML(file, reports) {
     body += `${marked(`## Summary of Violations: ${
       Object.entries(reports).reduce((total, [url, report]) => total + countViolations(report), 0)} total violations`)}</div></div>`;
   } catch (err) {
-    console.log('Error:', err);
+    logger.error('Error:', err);
     body += marked('## Summary of Violations');
   }
   body += '<div class="row"><div class="col-xs-12">';
@@ -132,7 +132,7 @@ export function outputToHTML(file, reports) {
     body += `${marked(`## Summary of Passing Tests: ${
       Object.entries(reports).reduce((total, [url, report]) => total + countPasses(report), 0)} total passing tests`)}</div></div>`;
   } catch (err) {
-    console.log('Error:', err);
+    logger.error('Error:', err);
     body += marked('## Summary of Passing Tests');
   }
 
