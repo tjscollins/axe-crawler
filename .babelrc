@@ -4,12 +4,8 @@
      {
        "targets": {
          "node": "6.11.1"
-       },
-       "modules": false
+       }
      }
     ]
-  ],
-  "plugins": [
-    "external-helpers"
   ]
 }
