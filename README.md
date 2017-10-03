@@ -39,7 +39,7 @@ Command line arguments passed to axe-crawler override config file settings and t
     Specify how many levels deep you want the crawler to scrape for new links.    Default: 5.
 
 --check n
-    Specify the number of URLs you want to actually test from the queue.  Useful for
+    Specify the maximum number of URLs you want to actually test from the queue.  Useful for
     testing the crawler and seeing what links it finds without running the axe-core
     tests on every URL.  Default: undefined which checks all links in the queue.
 
@@ -56,6 +56,13 @@ Command line arguments passed to axe-crawler override config file settings and t
 
 --configFile filename
     Specify a config file different from the default .axecrawlerrc
+
+--verbose error | info | debug
+    Specify a verbosity level for console output.  Info level includes errors, debug 
+    includes all other logging statements.  Default: error.
+
+--quiet
+    Silence all logging output.a
 ```
 
 ### Config File Options
@@ -65,7 +72,7 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
 ```json
 {
     "depth": 5,
-    "check": 100,
+    "check": 1000,
     "output": "reports",
     "viewPorts": [
         {
@@ -88,7 +95,8 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
             "width": 1440,
             "height": 900
         }
-    ]
+    ],
+    "verbose": "error"
 }
 ```
 

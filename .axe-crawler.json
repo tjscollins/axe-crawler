@@ -24,5 +24,5 @@
             "height": 900
         }
     ],
-    "verbose": false
+    "verbose": "info"
 }
