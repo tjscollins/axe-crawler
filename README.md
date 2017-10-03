@@ -29,10 +29,11 @@ When it reaches crawls through the domain to the specified depth (default: 5), o
 
 ## Configuration
 
-Most paramters of axe-crawler are configurable at the command line or with a JSON config file named `.axecrawlerrc` in the current directory.
+Most paramters of axe-crawler are configurable at the command line or with a JSON config file named `.axe-crawler.json` in the current directory.
 
 ### Command Line Options
 
+Command line arguments passed to axe-crawler override config file settings and the default options.
 ```
 --depth d
     Specify how many levels deep you want the crawler to scrape for new links.    Default: 5.
@@ -52,11 +53,14 @@ Most paramters of axe-crawler are configurable at the command line or with a JSO
     Specify the prefix for your output file names which will be outputFilePrefix.html 
     for the summary report and outputFilePrefix.json for the raw data.  Default: 
     'reports'
+
+--configFile filename
+    Specify a config file different from the default .axecrawlerrc
 ```
 
 ### Config File Options
 
-Config file should be named `.axecrawlerrc` and be in the current directory when axe-crawler is run.
+Config file should be named `.axe-crawler.json` and be in the current directory when axe-crawler is run.
 
 ```json
 {

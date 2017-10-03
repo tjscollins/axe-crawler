@@ -8,7 +8,7 @@
 const fs = require('fs');
 const minimist = require('minimist');
 
-const DEFAULT_FILE = '.axecrawlerrc';
+const DEFAULT_FILE = '.axe-crawler.json';
 
 const DEFAULT_OPTS = {
   depth: 5,
@@ -35,6 +35,7 @@ const DEFAULT_OPTS = {
     height: 900,
   },
   ],
+  verbose: false,
 };
 
 /**
@@ -63,10 +64,9 @@ function parseViewPortsArg(views) {
  * options into single global options object
  *
  * @export
- * @param {string} file filename of config file
  * @returns {Object} globalOptions object
  */
-export default function crawlerOpts(file) {
+export default function crawlerOpts() {
   const argv = minimist(process.argv.slice(2));
   argv.domains = argv._;
   if (argv.viewPorts) {
@@ -76,13 +76,17 @@ export default function crawlerOpts(file) {
     }
   }
 
-  const optsFile = file || DEFAULT_FILE;
+  const optsFile = argv.configFile || DEFAULT_FILE;
+  let jsonOpts = {};
   try {
-    return Object.assign(DEFAULT_OPTS, JSON.parse(fs.readFileSync(optsFile)), argv);
+    jsonOpts = JSON.parse(fs.readFileSync(optsFile));
   } catch (err) {
     if (err.code === 'ENOENT' && err.path === optsFile) {
-      return Object.assign(DEFAULT_OPTS, argv);
+      console.log('No config file found');
+    } else if (err instanceof SyntaxError) {
+      console.log(`Invalid JSON config file ${optsFile}`);
+      console.log('Ignoring JSON config file...');
     }
-    throw err;
   }
+  return Object.assign(DEFAULT_OPTS, jsonOpts, argv);
 }

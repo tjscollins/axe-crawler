@@ -1,0 +1,28 @@
+{
+    "depth": 5,
+    "check": 100,
+    "output": "reports",
+    "viewPorts": [
+        {
+            "name": "mobile",
+            "width": 360,
+            "height": 640
+        },
+        {
+            "name": "tablet_vertical",
+            "width": 768,
+            "height": 1024
+        },
+        {
+            "name": "tablet_horizontal",
+            "width": 1024,
+            "height": 768
+        },
+        {
+            "name": "desktop",
+            "width": 1440,
+            "height": 900
+        }
+    ],
+    "verbose": false
+}
