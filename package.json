@@ -1,8 +1,12 @@
 {
   "name": "axe-crawler",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A website crawler meant to automatically test a website for accessibility issues using the axe-core library",
   "main": "dist/index.js",
+  "repository" : {
+    "type": "git",
+    "url" : "https://github.com/tjscollins/axe-crawler"
+  },
   "scripts": {
     "build": "NODE_ENV=production node_modules/rollup/bin/rollup -c rollup.config.js",
     "test": "jest"
@@ -13,7 +17,6 @@
   "author": "Tyler Collins",
   "license": "MIT",
   "dependencies": {
-    "axe-core": "^2.4.1",
     "axe-webdriverjs": "^1.1.5",
     "axios": "^0.16.2",
     "cheerio": "^1.0.0-rc.2",
@@ -24,12 +27,10 @@
     "validator": "^8.2.0"
   },
   "devDependencies": {
-    "babel": "^6.23.0",
     "babel-cli": "^6.26.0",
     "babel-jest": "^21.2.0",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.6.0",
-    "babel-preset-es2015": "^6.24.1",
     "eslint": "^4.7.2",
     "eslint-config-airbnb-base": "^12.0.1",
     "eslint-plugin-import": "^2.7.0",

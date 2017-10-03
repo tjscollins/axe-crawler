@@ -19,7 +19,7 @@ axe-crawler defaults to crawling through all links it can find WITHIN the provid
 ```
 axe-crawler mydomain.org
 ```
-then axe-crawler will parse `http://mydomain.org` for all links it finds and build a queue of unique links.  It will then visit those links and look for new links to add to its queue.  Because it uses a Javascript Set to build the queue of unique links, it will only scrape each url once.
+then axe-crawler will parse `http://mydomain.org` for all links it finds and build a queue of unique links.  It will then visit those links and look for new links to add to its queue.  Because it uses a Javascript Set to build the queue of unique links, it will only queue each url once.
 
 By default, axe-crawler ignores links that end in common media or document extensions (.mp3, .avi, .pdf, .docx, etc.)
 
@@ -105,5 +105,5 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
 ## Planned Features
 
 * Better error reporting and handling esp. for bad configuration and broken links
-* Verbose / quiet modes
 * Oauth functionality for testing pages behind logins
+* Random sampling of queued links
