@@ -8,6 +8,7 @@ import polyfills from './polyfills';
 import { outputToHTML, outputToJSON } from './output';
 import crawl from './crawler';
 import crawlerOpts from './config';
+import logger from './logger';
 
 /**
  * resultsToReports - function applied by Array.prototype.reduce to array of results to combine for
@@ -31,7 +32,7 @@ function resultsToReports(reports, { result, viewPort }) {
 
     /* eslint-enable no-param-reassign */
   } catch (err) {
-    console.log(err);
+    logger.error(err);
   }
   return reports;
 }
@@ -45,7 +46,7 @@ function resultsToReports(reports, { result, viewPort }) {
  */
 function generateReportSaveFn({ output }) {
   return (results) => {
-    console.log('Creating reports: ', `${output}.json`, `${output}.html`);
+    logger.info('Creating reports: ', `${output}.json`, `${output}.html`);
     const reports = results.reduce(resultsToReports, {});
     outputToJSON(`${output}.json`, reports);
     outputToHTML(`${output}.html`, reports);
@@ -91,7 +92,7 @@ async function testPage(testCase) {
   let outputReport = null;
   await driver.get(url)
     .then(() => {
-      console.log('Testing: ', url, name);
+      logger.info('Testing: ', url, name);
       axeBuilder(driver)
         .analyze((results) => {
           outputReport = results;
@@ -119,16 +120,17 @@ async function main() {
   // Read config
   const opts = crawlerOpts();
   const domain = opts.domains.pop();
+  process.verbose = opts.verbose;
 
   // Create Queue of links on main page
-  console.log(`Crawling ${domain} to depth of:  ${opts.depth}`);
+  logger.info(`Crawling ${domain} to depth of:  ${opts.depth}`);
   const linkQueue = await crawl(domain, opts.depth, filterLinks(domain));
 
-  console.log(`Found ${linkQueue.size} links within ${domain}`);
-  console.log('Total urls to test:', Math.min(opts.check, linkQueue.size));
-  console.log(`Testing ${opts.viewPorts.length} views: `);
+  logger.info(`Found ${linkQueue.size} links within ${domain}`);
+  logger.info('Total urls to test:', Math.min(opts.check, linkQueue.size));
+  logger.info(`Testing ${opts.viewPorts.length} views: `);
   opts.viewPorts.forEach((viewPort) => {
-    console.log(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
+    logger.info(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
   });
 
   // Test each link
@@ -137,7 +139,7 @@ async function main() {
     .slice(0, opts.check * opts.viewPorts.length)
     .map(testPage))
     .then(generateReportSaveFn(opts))
-    .catch(console.log);
+    .catch(logger.info);
 }
 
 polyfills();

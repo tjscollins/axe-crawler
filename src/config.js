@@ -5,6 +5,8 @@
  * @license MIT
  */
 
+import logger from './logger';
+
 const fs = require('fs');
 const minimist = require('minimist');
 
@@ -76,16 +78,20 @@ export default function crawlerOpts() {
     }
   }
 
+  if (argv.hasOwnProperty('verbose')) {
+    argv.verbose = true;
+  }
+
   const optsFile = argv.configFile || DEFAULT_FILE;
   let jsonOpts = {};
   try {
     jsonOpts = JSON.parse(fs.readFileSync(optsFile));
   } catch (err) {
     if (err.code === 'ENOENT' && err.path === optsFile) {
-      console.log('No config file found');
+      logger.error('No config file found');
     } else if (err instanceof SyntaxError) {
-      console.log(`Invalid JSON config file ${optsFile}`);
-      console.log('Ignoring JSON config file...');
+      logger.error(`Invalid JSON config file ${optsFile}`);
+      logger.error('Ignoring JSON config file...');
     }
   }
   return Object.assign(DEFAULT_OPTS, jsonOpts, argv);

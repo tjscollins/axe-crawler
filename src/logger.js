@@ -27,3 +27,8 @@ function error(...args) {
     console.error(...args);
   }
 }
+
+export default {
+  info,
+  error,
+};
