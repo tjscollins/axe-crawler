@@ -5,9 +5,11 @@
  * @license MIT
  */
 
-const fs = require('fs');
-const marked = require('marked');
-const escape = require('escape-html');
+import fs from 'fs';
+import marked from 'marked';
+import escape from 'escape-html';
+
+import logger from './logger';
 
 export function outputToJSON(file, reports) {
   const formattedJSON = JSON.stringify(reports, null, 2);
@@ -69,6 +71,7 @@ export function outputToHTML(file, reports) {
     return list;
   /* eslint-enable no-param-reassign */
   }
+
   function printViewCounts(body, report, reportType) {
     body += '<ul>';
     Object.entries(report[reportType]).forEach(([view, results]) => {
@@ -79,11 +82,13 @@ export function outputToHTML(file, reports) {
 
   function printViolation(list, view) {
     return ({ impact, description, nodes }) => {
+      logger.debug(list, view, impact, description);
       list += `<li>${impact.toUpperCase()}: ${escape(description)}<br />`;
       list += '';
       list += `<span>${view.toUpperCase()} Affected Nodes: </span><ul>`;
       list += nodes.reduce(writeNodeMessages, '');
       list += '</ul></li>';
+      return list;
     };
   }
 
@@ -95,19 +100,30 @@ export function outputToHTML(file, reports) {
     body += marked('## Summary of Violations');
   }
   body += '<div class="row"><div class="col-xs-12">';
+
+  function listTestResults([view, results]) {
+    const list = `<span>${view.toUpperCase()}</span><br/><ol>${results.reduce((item, {
+      description,
+      nodes,
+      impact,
+    }) => {
+      item += `<li>${impact ? `${impact.toUpperCase()}: ` : ''}${escape(description)}<br />`;
+      item += '<span>Affected Nodes: </span><ul>';
+      item += nodes.reduce(writeNodeMessages, '');
+      return item += '</ul></li>';
+    }, '')}`;
+    body += `${list}</ol>`;
+  }
+
   Object.entries(reports).forEach(([url, report]) => {
     const violationCount = countViolations(report);
 
     body += marked(`### ${escape(url)} ${violationCount} violations`);
-
     body = printViewCounts(body, report, 'violations');
+    body += '<br/>';
 
     if (violationCount !== 0) {
-      const list = '<ol>';
-      Object.entries(report.violations).forEach(([view, violations]) => {
-        violations.forEach(printViolation(list, view));
-      });
-      body += `${list}</ol>`;
+      Object.entries(report.violations).forEach(listTestResults, '');
     }
   });
 
@@ -121,31 +137,20 @@ export function outputToHTML(file, reports) {
   }
 
   Object.entries(reports).forEach(([url, report]) => {
-    // console.log(report);
     const passesCount = countPasses(report);
 
     body += marked(`### ${escape(url)} ${passesCount} passes`);
-
     body = printViewCounts(body, report, 'passes');
+    body += '<br />';
 
     if (passesCount !== 0) {
-      Object.entries(report.passes).forEach(([view, passes]) => {
-        const list = `<br/><ol><br/>${passes.reduce((list, {
-          description,
-          nodes,
-        }) => {
-          list += `<li>${escape(description)}<br />`;
-          list += `<span>${view.toUpperCase()} Affected Nodes: <span><ul>`;
-          list += nodes.reduce(writeNodeMessages, '');
-          return list += '</ul></li>';
-        })}`;
-        body += `${list}</ol>`;
-      }, '');
+      Object.entries(report.passes).forEach(listTestResults, '');
     }
   });
+
   body += '</div></div>';
 
-  const foot = '<div></body><script></script></html>';
+  const foot = '</body><script></script></html>';
 
   fs.writeFile(file, head + body + foot);
 }
