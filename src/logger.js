@@ -42,4 +42,5 @@ function error(...args) {
 export default {
   info,
   error,
+  debug,
 };
