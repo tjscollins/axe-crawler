@@ -10,7 +10,7 @@ import logger from './logger';
 const fs = require('fs');
 const minimist = require('minimist');
 
-const DEFAULT_FILE = '.axe-crawler.json';
+const DEFAULT_FILE = './.axe-crawler.json';
 
 const DEFAULT_OPTS = {
   depth: 5,
