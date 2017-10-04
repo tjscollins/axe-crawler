@@ -107,3 +107,4 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
 * Better error reporting and handling esp. for bad configuration and broken links
 * Oauth functionality for testing pages behind logins
 * Random sampling of queued links
+* Configuration for filtering out urls you don't want to scrape
