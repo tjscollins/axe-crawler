@@ -1,7 +1,8 @@
 {
     "depth": 5,
-    "check": 100,
     "output": "reports",
+    "ignore": false,
+    "whitelist": false,
     "viewPorts": [
         {
             "name": "mobile",

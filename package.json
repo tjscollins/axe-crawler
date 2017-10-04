@@ -1,6 +1,6 @@
 {
   "name": "axe-crawler",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "A website crawler meant to automatically test a website for accessibility issues using the axe-core library",
   "main": "dist/index.js",
   "repository" : {

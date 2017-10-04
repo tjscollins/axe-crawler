@@ -16,6 +16,8 @@ const DEFAULT_OPTS = {
   depth: 5,
   check: undefined, // undefined => check all
   output: 'reports',
+  ignore: '.*',
+  whitelist: '.*',
   viewPorts: [
     {
       name: 'mobile',
@@ -76,6 +78,7 @@ function parseViewPortsArg(views) {
 export default function crawlerOpts() {
   const argv = minimist(process.argv.slice(2));
   argv.domains = argv._;
+  delete argv._;
   if (argv.viewPorts) {
     argv.viewPorts = parseViewPortsArg(argv.viewPorts);
     if (argv.viewPorts.length === 0) {

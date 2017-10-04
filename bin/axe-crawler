@@ -84,6 +84,12 @@ function polyfills() {
       return reduce(keys(O), (e, k) => concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []), []);
     };
   }
+
+  if (!Array.prototype.last) {
+    Array.prototype.last = function () {
+      return this[this.length - 1];
+    };
+  }
 }
 
 /**
@@ -515,12 +521,14 @@ var crawl = (() => {
 const fs$1 = require('fs');
 const minimist = require('minimist');
 
-const DEFAULT_FILE = '.axe-crawler.json';
+const DEFAULT_FILE = './.axe-crawler.json';
 
 const DEFAULT_OPTS = {
   depth: 5,
   check: undefined, // undefined => check all
   output: 'reports',
+  ignore: '.*',
+  whitelist: '.*',
   viewPorts: [{
     name: 'mobile',
     width: 360,
@@ -575,6 +583,7 @@ function parseViewPortsArg(views) {
 function crawlerOpts() {
   const argv = minimist(process.argv.slice(2));
   argv.domains = argv._;
+  delete argv._;
   if (argv.viewPorts) {
     argv.viewPorts = parseViewPortsArg(argv.viewPorts);
     if (argv.viewPorts.length === 0) {
@@ -648,6 +657,15 @@ let testPage = (() => {
 })();
 
 /**
+ * Generates  and returns a function to be passed to Array.prototype.filter to
+ * filter an Array<string> of links.
+ *
+ * @param {Object} opts global options object
+ * @returns {Function} To be passed to Array.prototype.filter
+ */
+
+
+/**
  * main - main function to start scraping the website, build the queue of
  *  individual pages and run axe tests on each page
  *
@@ -657,22 +675,23 @@ let main = (() => {
   var _ref2 = asyncToGenerator(function* () {
     // Read config
     const opts = crawlerOpts();
-    const domain = opts.domains.pop();
+    const domain = opts.domains.last();
     process.verbose = opts.verbose;
 
+    logger.debug('Crawling with options: \n', opts);
+
     // Create Queue of links on main page
-    logger.debug(`Crawling ${domain} to depth of:  ${opts.depth}`);
-    const linkQueue = yield crawl(domain, opts.depth, filterLinks(domain));
+    const linkQueue = yield crawl(domain, opts.depth, filterLinks(opts));
 
     logger.info(`Found ${linkQueue.size} links within ${domain}`);
-    logger.debug('Total urls to test:', Math.min(opts.check, linkQueue.size));
+    logger.debug('Total urls to test:', Math.min(opts.check || Infinity, linkQueue.size));
     logger.debug(`Testing ${opts.viewPorts.length} views: `);
     opts.viewPorts.forEach(function (viewPort) {
       logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
     });
 
     // Test each link
-    Promise.all([...linkQueue].reduce(createURLViewReducer(opts), []).slice(0, opts.check * opts.viewPorts.length).map(testPage)).then(generateReportSaveFn(opts)).catch(logger.info);
+    Promise.all([...linkQueue].reduce(createURLViewReducer(opts), []).slice(0, opts.check ? opts.check * opts.viewPorts.length : undefined).map(testPage)).then(generateReportSaveFn(opts)).catch(logger.info);
   });
 
   return function main() {
@@ -737,10 +756,11 @@ function createURLViewReducer(globalOptions) {
     });
     return links;
   };
-}
+}function filterLinks(opts) {
+  const ignoreRegex = new RegExp(opts.ignore || '^$');
+  const whiteListRegex = new RegExp(opts.whitelist || '.*');
 
-function filterLinks(domain) {
-  return link => validator.isURL(link) && notMedia(link) && matchDomain(domain)(link);
+  return link => validator.isURL(link) && notMedia(link) && matchDomain(opts.domains.last())(link) && whiteListRegex.test(link) && (opts.whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
 }
 
 polyfills();

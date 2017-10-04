@@ -105,10 +105,22 @@ async function testPage(testCase) {
   };
 }
 
-function filterLinks(domain) {
+/**
+ * Generates  and returns a function to be passed to Array.prototype.filter to
+ * filter an Array<string> of links.
+ *
+ * @param {Object} opts global options object
+ * @returns {Function} To be passed to Array.prototype.filter
+ */
+function filterLinks(opts) {
+  const ignoreRegex = new RegExp(opts.ignore || '^$');
+  const whiteListRegex = new RegExp(opts.whitelist || '.*');
+
   return link => isURL(link) &&
     notMedia(link) &&
-    matchDomain(domain)(link);
+    matchDomain(opts.domains.last())(link) &&
+    whiteListRegex.test(link) &&
+    (opts.whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
 }
 
 /**
@@ -120,15 +132,16 @@ function filterLinks(domain) {
 async function main() {
   // Read config
   const opts = crawlerOpts();
-  const domain = opts.domains.pop();
+  const domain = opts.domains.last();
   process.verbose = opts.verbose;
 
+  logger.debug('Crawling with options: \n', opts);
+
   // Create Queue of links on main page
-  logger.debug(`Crawling ${domain} to depth of:  ${opts.depth}`);
-  const linkQueue = await crawl(domain, opts.depth, filterLinks(domain));
+  const linkQueue = await crawl(domain, opts.depth, filterLinks(opts));
 
   logger.info(`Found ${linkQueue.size} links within ${domain}`);
-  logger.debug('Total urls to test:', Math.min(opts.check, linkQueue.size));
+  logger.debug('Total urls to test:', Math.min(opts.check || Infinity, linkQueue.size));
   logger.debug(`Testing ${opts.viewPorts.length} views: `);
   opts.viewPorts.forEach((viewPort) => {
     logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
@@ -137,7 +150,7 @@ async function main() {
   // Test each link
   Promise.all([...linkQueue]
     .reduce(createURLViewReducer(opts), [])
-    .slice(0, opts.check * opts.viewPorts.length)
+    .slice(0, opts.check ? opts.check * opts.viewPorts.length : undefined)
     .map(testPage))
     .then(generateReportSaveFn(opts))
     .catch(logger.info);
