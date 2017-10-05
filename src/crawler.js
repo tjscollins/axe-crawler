@@ -9,6 +9,7 @@
 import { isURL } from 'validator';
 import axios from 'axios';
 import cheerio from 'cheerio';
+import logger from './logger';
 
 /**
  * getHref -- helper function to pull the href attribute off a DOM
@@ -44,7 +45,7 @@ export function queueLinks(pageContent, filterFn = x => true) {
       .filter(filterFn)
       .map(url => url.replace(/^https/, 'http')));
   }
-  console.log(Error(`Website returned an error: ${pageContent.status}`));
+  logger.error(Error(`Website returned an error: ${pageContent.status}`));
   return new Set();
 }
 
