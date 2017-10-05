@@ -1,9 +1,8 @@
-import { isURL } from 'validator';
 import webDriver from 'selenium-webdriver';
 import chromeDriver from 'selenium-webdriver/chrome';
 import axeBuilder from 'axe-webdriverjs';
 
-import { notMedia, matchDomain } from './util';
+import { filterLinks, selectSampleSet } from './util';
 import polyfills from './polyfills';
 import { outputToHTML, outputToJSON } from './output';
 import crawl from './crawler';
@@ -54,13 +53,13 @@ function generateReportSaveFn({ output }) {
 }
 
 /**
- * createURLViewReducer - generates a callback function for used to reduce list
- * of urls into list of {url, viewPort} combinations
+ * Generates a callback function for used to reduce list of urls into
+ * list of {url, viewPort} combinations
  *
  * @param {Object} globalOptions
  * @returns {Function} callback function for reduce
  */
-function createURLViewReducer(globalOptions) {
+function createURLViewSet(globalOptions) {
   return (links, url) => {
     globalOptions.viewPorts.forEach((viewPort) => {
       links.push({ url, viewPort });
@@ -70,8 +69,8 @@ function createURLViewReducer(globalOptions) {
 }
 
 /**
- * testPage - runs axe-core tests for supplied testCase.  Returns the results
- *  of that test.
+ * runs axe-core tests for supplied testCase.  Returns the results of
+ * that test.
  *
  * @param {Object} testCase
  * @param {string} testCase.url url of the testCase
@@ -106,24 +105,6 @@ async function testPage(testCase) {
 }
 
 /**
- * Generates  and returns a function to be passed to Array.prototype.filter to
- * filter an Array<string> of links.
- *
- * @param {Object} opts global options object
- * @returns {Function} To be passed to Array.prototype.filter
- */
-function filterLinks(opts) {
-  const ignoreRegex = new RegExp(opts.ignore || '^$');
-  const whiteListRegex = new RegExp(opts.whitelist || '.*');
-
-  return link => isURL(link) &&
-    notMedia(link) &&
-    matchDomain(opts.domains.last())(link) &&
-    whiteListRegex.test(link) &&
-    (opts.whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
-}
-
-/**
  * main - main function to start scraping the website, build the queue of
  *  individual pages and run axe tests on each page
  *
@@ -142,6 +123,11 @@ async function main() {
 
   logger.info(`Found ${linkQueue.size} links within ${domain}`);
   logger.debug('Total urls to test:', Math.min(opts.check || Infinity, linkQueue.size));
+  if (opts.random > 0 && opts.random < 1) {
+    logger.debug(`Selecting random sample ${opts.random} of total`);
+  } else {
+    opts.random = 1;
+  }
   logger.debug(`Testing ${opts.viewPorts.length} views: `);
   opts.viewPorts.forEach((viewPort) => {
     logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
@@ -149,11 +135,12 @@ async function main() {
 
   // Test each link
   Promise.all([...linkQueue]
-    .reduce(createURLViewReducer(opts), [])
+    .reduce(selectSampleSet(opts), [])
+    .reduce(createURLViewSet(opts), [])
     .slice(0, opts.check ? opts.check * opts.viewPorts.length : undefined)
     .map(testPage))
     .then(generateReportSaveFn(opts))
-    .catch(logger.info);
+    .catch(logger.error);
 }
 
 polyfills();

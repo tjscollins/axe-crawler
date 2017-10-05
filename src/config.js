@@ -18,6 +18,7 @@ const DEFAULT_OPTS = {
   output: 'reports',
   ignore: '.*',
   whitelist: '.*',
+  random: false,
   viewPorts: [
     {
       name: 'mobile',
