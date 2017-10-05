@@ -10,12 +10,14 @@
  *
  */
 export default function polyfills() {
+  /* eslint-disable no-extend-native */
+
   const reduce = Function.bind.call(Function.call, Array.prototype.reduce);
   const isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
   const concat = Function.bind.call(Function.call, Array.prototype.concat);
   const keys = Reflect.ownKeys;
 
-  Set.prototype.difference = function (setB) {
+  Set.prototype.difference = (setB) => {
     const difference = new Set(this);
     for (const elem of setB) {
       difference.delete(elem);
@@ -32,8 +34,6 @@ export default function polyfills() {
   }
 
   if (!Array.prototype.last) {
-    Array.prototype.last = function () {
-      return this[this.length - 1];
-    };
+    Array.prototype.last = () => this[this.length - 1];
   }
 }
