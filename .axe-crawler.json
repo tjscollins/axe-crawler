@@ -3,6 +3,7 @@
     "output": "reports",
     "ignore": false,
     "whitelist": false,
+    "random": 1,
     "viewPorts": [
         {
             "name": "mobile",

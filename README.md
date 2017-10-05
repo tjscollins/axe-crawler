@@ -4,7 +4,9 @@
 
 axe-crawler is a Node.js webcrawler which tests every page it can find in a single domain using the [axe-core](https://github.com/dequelabs/axe-core) accessibility testing library.
 
-axe-crawler produces detailed reports of accessibility issues it finds on pages in the domain.
+axe-crawler produces a detailed html summary report of the accessibility issues it finds on pages in the domain in addition to raw JSON data output from the tests.  
+
+***WARNING: Depending on the number of tests run (urls x viewPorts) the raw JSON data output can be quite large, easily in the tens of megabytes.  Use the --check, --random, and --viewPort options to control which pages are tested.***
 
 ## Installation
 
@@ -46,6 +48,12 @@ Command line arguments passed to axe-crawler override config file settings and t
     Useful for testing the crawler and seeing what links it finds without running
     the axe-core tests on every URL.  Default: undefined which checks all links
     in the queue.
+
+--random p
+    Specify the rate at which to randomly select pages from the website.  Crawler
+    will first build a queue of all pages that it can find and then reduce that
+    queue to the sampling rate given by this option.  p represents the probably
+    any single link will be chosen. 0 < p < 1 . Default: 1 (i.e. 100%)
 
 --viewPorts viewportString
     Specify which viewPorts to use when running accessibility tests.  Useful for
@@ -90,6 +98,7 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
     "output": "reports",
     "ignore": false,
     "whitelist": false,
+    "random": 1,
     "viewPorts": [
         {
             "name": "mobile",
@@ -120,4 +129,3 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
 
 * Better error reporting and handling esp. for bad configuration and broken links
 * Oauth functionality for testing pages behind logins
-* Random sampling of queued links
