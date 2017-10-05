@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('validator'), require('selenium-webdriver'), require('selenium-webdriver/chrome'), require('axe-webdriverjs'), require('fs'), require('marked'), require('escape-html'), require('axios'), require('cheerio')) :
-	typeof define === 'function' && define.amd ? define(['validator', 'selenium-webdriver', 'selenium-webdriver/chrome', 'axe-webdriverjs', 'fs', 'marked', 'escape-html', 'axios', 'cheerio'], factory) :
-	(factory(global.validator,global.webDriver,global.chromeDriver,global.axeBuilder,global.fs,global.marked,global.escape,global.axios,global.cheerio));
-}(this, (function (validator,webDriver,chromeDriver,axeBuilder,fs,marked,escape,axios,cheerio) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('selenium-webdriver'), require('selenium-webdriver/chrome'), require('axe-webdriverjs'), require('validator'), require('fs'), require('marked'), require('escape-html'), require('axios'), require('cheerio')) :
+	typeof define === 'function' && define.amd ? define(['selenium-webdriver', 'selenium-webdriver/chrome', 'axe-webdriverjs', 'validator', 'fs', 'marked', 'escape-html', 'axios', 'cheerio'], factory) :
+	(factory(global.webDriver,global.chromeDriver,global.axeBuilder,global.validator,global.fs,global.marked,global.escape,global.axios,global.cheerio));
+}(this, (function (webDriver,chromeDriver,axeBuilder,validator,fs,marked,escape,axios,cheerio) { 'use strict';
 
 webDriver = webDriver && webDriver.hasOwnProperty('default') ? webDriver['default'] : webDriver;
 chromeDriver = chromeDriver && chromeDriver.hasOwnProperty('default') ? chromeDriver['default'] : chromeDriver;
@@ -20,6 +20,28 @@ cheerio = cheerio && cheerio.hasOwnProperty('default') ? cheerio['default'] : ch
  * @author Tyler Collins
  * @license MIT
  */
+/**
+ * if opts.random is set, create filter fn to filter urls to create
+ * randomized sample of total url queue
+ *
+ * @param {Object} opts
+ * @returns {Function}
+ */
+function selectSampleSet(opts) {
+  return (urlList, url) => {
+    if (!opts.random) {
+      urlList.push(url);
+      return urlList;
+    }
+
+    if (Math.random() < opts.random) {
+      urlList.push(url);
+      return urlList;
+    }
+
+    return urlList;
+  };
+}
 
 /**
  * notMedia - function to filter Wordpress media urls from list of urls
@@ -49,6 +71,20 @@ function matchDomain(domain) {
 }
 
 /**
+ * Generates  and returns a function to be passed to
+ * Array.prototype.filter to filter an Array<string> of links.
+ *
+ * @param {Object} opts global options object
+ * @returns {Function} To be passed to Array.prototype.filter
+ */
+function filterLinks(opts) {
+  const ignoreRegex = new RegExp(opts.ignore || '^$');
+  const whiteListRegex = new RegExp(opts.whitelist || '.*');
+
+  return link => validator.isURL(link) && notMedia(link) && matchDomain(opts.domains.last())(link) && whiteListRegex.test(link) && (opts.whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
+}
+
+/**
  * @fileOverview Polyfills for axe-crawler
  * @name polyfills.js
  * @author Tyler Collins
@@ -72,12 +108,6 @@ function polyfills() {
     }
     return difference;
   };
-
-  if (!Object.values) {
-    Object.values = function values(O) {
-      return reduce(keys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []);
-    };
-  }
 
   if (!Object.entries) {
     Object.entries = function entries(O) {
@@ -529,6 +559,7 @@ const DEFAULT_OPTS = {
   output: 'reports',
   ignore: '.*',
   whitelist: '.*',
+  random: false,
   viewPorts: [{
     name: 'mobile',
     width: 360,
@@ -618,8 +649,8 @@ function crawlerOpts() {
 }
 
 /**
- * testPage - runs axe-core tests for supplied testCase.  Returns the results
- *  of that test.
+ * runs axe-core tests for supplied testCase.  Returns the results of
+ * that test.
  *
  * @param {Object} testCase
  * @param {string} testCase.url url of the testCase
@@ -657,20 +688,13 @@ let testPage = (() => {
 })();
 
 /**
- * Generates  and returns a function to be passed to Array.prototype.filter to
- * filter an Array<string> of links.
- *
- * @param {Object} opts global options object
- * @returns {Function} To be passed to Array.prototype.filter
- */
-
-
-/**
  * main - main function to start scraping the website, build the queue of
  *  individual pages and run axe tests on each page
  *
  * @param {string} url homepage of website to be scraped and tested.
  */
+
+
 let main = (() => {
   var _ref2 = asyncToGenerator(function* () {
     // Read config
@@ -685,13 +709,18 @@ let main = (() => {
 
     logger.info(`Found ${linkQueue.size} links within ${domain}`);
     logger.debug('Total urls to test:', Math.min(opts.check || Infinity, linkQueue.size));
+    if (opts.random > 0 && opts.random < 1) {
+      logger.debug(`Selecting random sample ${opts.random} of total`);
+    } else {
+      opts.random = 1;
+    }
     logger.debug(`Testing ${opts.viewPorts.length} views: `);
     opts.viewPorts.forEach(function (viewPort) {
       logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
     });
 
     // Test each link
-    Promise.all([...linkQueue].reduce(createURLViewReducer(opts), []).slice(0, opts.check ? opts.check * opts.viewPorts.length : undefined).map(testPage)).then(generateReportSaveFn(opts)).catch(logger.info);
+    Promise.all([...linkQueue].reduce(selectSampleSet(opts), []).reduce(createURLViewSet(opts), []).slice(0, opts.check ? opts.check * opts.viewPorts.length : undefined).map(testPage)).then(generateReportSaveFn(opts)).catch(logger.error);
   });
 
   return function main() {
@@ -743,24 +772,19 @@ function generateReportSaveFn({ output }) {
 }
 
 /**
- * createURLViewReducer - generates a callback function for used to reduce list
- * of urls into list of {url, viewPort} combinations
+ * Generates a callback function for used to reduce list of urls into
+ * list of {url, viewPort} combinations
  *
  * @param {Object} globalOptions
  * @returns {Function} callback function for reduce
  */
-function createURLViewReducer(globalOptions) {
+function createURLViewSet(globalOptions) {
   return (links, url) => {
     globalOptions.viewPorts.forEach(viewPort => {
       links.push({ url, viewPort });
     });
     return links;
   };
-}function filterLinks(opts) {
-  const ignoreRegex = new RegExp(opts.ignore || '^$');
-  const whiteListRegex = new RegExp(opts.whitelist || '.*');
-
-  return link => validator.isURL(link) && notMedia(link) && matchDomain(opts.domains.last())(link) && whiteListRegex.test(link) && (opts.whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
 }
 
 polyfills();
