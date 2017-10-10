@@ -1,4 +1,4 @@
-import webDriver from 'selenium-webdriver';
+import webDriver, { By, until } from 'selenium-webdriver';
 import chromeDriver from 'selenium-webdriver/chrome';
 import axeBuilder from 'axe-webdriverjs';
 
@@ -81,27 +81,30 @@ function createURLViewSet(globalOptions) {
  * @param {number} testCase.viewPort.width
  * @param {number} testCase.viewPort.height
  */
-async function testPage(testCase) {
-  const { url, viewPort: { name, width, height } } = testCase;
-  const options = new chromeDriver.Options();
-  options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
-  const driver = new webDriver.Builder()
-    .forBrowser('chrome')
-    .setChromeOptions(options)
-    .build();
-  let outputReport = null;
-  await driver.get(url)
-    .then(() => {
-      logger.info(`Testing ${url} ${name}`);
-      axeBuilder(driver)
-        .analyze((results) => {
-          outputReport = results;
-          logger.debug(`Results for ${url} ${name} received`);
-        });
-    }).then(() => driver.close());
-  return {
-    result: outputReport,
-    viewPort: testCase.viewPort,
+function testPage(opts) {
+  return async function test(testCase) {
+    const { url, viewPort: { name, width, height } } = testCase;
+    const options = new chromeDriver.Options();
+    options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
+    const driver = new webDriver.Builder()
+      .forBrowser('chrome')
+      .setChromeOptions(options)
+      .build();
+    let outputReport = null;
+
+    await driver.get(url);
+    logger.info(`Testing ${url} ${name}`);
+    await axeBuilder(driver)
+      .analyze((results) => {
+        outputReport = results;
+        logger.debug(`Results for ${url} ${name} received`);
+      });
+    await driver.close();
+
+    return {
+      result: outputReport,
+      viewPort: testCase.viewPort,
+    };
   };
 }
 
@@ -140,7 +143,7 @@ async function main() {
     .reduce(selectSampleSet(opts), [])
     .reduce(createURLViewSet(opts), [])
     .slice(0, numToCheck)
-    .map(testPage))
+    .map(testPage(opts)))
     .then(generateReportSaveFn(opts))
     .catch(logger.error);
 }
