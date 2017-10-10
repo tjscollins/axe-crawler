@@ -42,6 +42,7 @@ const DEFAULT_OPTS = {
     },
   ],
   verbose: 'error',
+  auth: {},
 };
 
 /**
