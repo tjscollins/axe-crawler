@@ -43,12 +43,13 @@ function resultsToReports(reports, { result, viewPort }) {
  * @param {Object} globalOptions
  * @returns {Function} callback function to print results of axe-core tests.
  */
-function generateReportSaveFn({ output }) {
+function generateReportSaveFn(opts) {
+  const { output } = opts;
   return (results) => {
     logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
     const reports = results.reduce(resultsToReports, {});
     outputToJSON(`${output}.json`, reports);
-    outputToHTML(`${output}.html`, reports);
+    outputToHTML(`${output}.html`, reports, opts);
   };
 }
 
@@ -91,11 +92,11 @@ async function testPage(testCase) {
   let outputReport = null;
   await driver.get(url)
     .then(() => {
-      logger.info('Testing: ', url, name);
+      logger.info(`Testing ${url} ${name}`);
       axeBuilder(driver)
         .analyze((results) => {
           outputReport = results;
-          logger.debug(`Results for ${url} received`);
+          logger.debug(`Results for ${url} ${name} received`);
         });
     }).then(() => driver.close());
   return {
@@ -124,9 +125,9 @@ async function main() {
   logger.info(`Found ${linkQueue.size} links within ${domain}`);
   logger.debug('Queue to be tested: ', linkQueue);
   const numToCheck = Math.min(isNatural(opts.check) ? opts.check : Infinity, linkQueue.size);
-  logger.debug(`Based on options, testing ${numToCheck} urls`);
+  logger.info(`Based on options, testing ${numToCheck} urls`);
   if (opts.random > 0 && opts.random < 1) {
-    logger.debug(`Selecting random sample ${opts.random} of total`);
+    logger.info(`Selecting random sample ${opts.random} of total`);
   } else {
     opts.random = 1;
   }

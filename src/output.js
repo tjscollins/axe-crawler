@@ -21,7 +21,7 @@ export function outputToJSON(file, reports) {
  *
  * @param {object} reports
  */
-export function outputToHTML(file, reports) {
+export function outputToHTML(file, reports, opts) {
   let head = '<!doctype html> <html lang="en"><head>';
   head += `<title>aXe Accessibility Engine Report ${new Date().toDateString()}</title>`;
   head += '<meta name="viewport" content="width=device-width, initial-scale=1">';
@@ -31,7 +31,12 @@ export function outputToHTML(file, reports) {
 
   let body = '</head><body><div class="container"><div class="row"><div class="col-xs-12">';
   body += marked(`# aXe Accessibility Engine Report ${new Date().toDateString()}`);
-  body += `${marked('This report is not a complete accessibility audit.  This report only documents those accessibility features tested by the axe-core library, and should not be considered exhaustive of the possible accessibility issues a website may have.  Use this report as a tool in a complete and comprehensive process of reviewing this site for accessibility issues.  More information regarding the features tested by the axe-core library may be found at [axe-core.org](https://axe-core.org/)')}</div></div>`;
+  body += marked('This report is not a complete accessibility audit.  This report only documents those accessibility features tested by the axe-core library, and should not be considered exhaustive of the possible accessibility issues a website may have.  Use this report as a tool in a complete and comprehensive process of reviewing this site for accessibility issues.  More information regarding the features tested by the axe-core library may be found at [axe-core.org](https://axe-core.org/)');
+
+  if (opts.random !== 1) {
+    body += marked(`This report represents only a random sample of ${Math.round(opts.random * 100)}% of all webpages on this domain.`);
+  }
+
   body += '<div class="row"><div class="col-xs-12">';
 
   function countResults(report, type) {
