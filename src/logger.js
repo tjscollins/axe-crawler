@@ -39,6 +39,15 @@ function error(...args) {
 }
 
 /**
+ * Forced logging regardles of verbose settings
+ *
+ * @param {any} args
+ */
+function force(...args) {
+  console.log(...args);
+}
+
+/**
  * Configure logger to supplied logging level.  Default to 'error'
  *
  * @param {string} level
@@ -64,5 +73,6 @@ export default {
   info,
   error,
   debug,
+  force,
   configure,
 };
