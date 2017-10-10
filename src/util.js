@@ -79,3 +79,8 @@ export function filterLinks(opts) {
     whiteListRegex.test(link) &&
     (opts.whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
 }
+
+export function isNatural(num) {
+  if (num < 0) return false;
+  return Number.isInteger(num);
+}

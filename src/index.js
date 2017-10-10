@@ -2,7 +2,7 @@ import webDriver from 'selenium-webdriver';
 import chromeDriver from 'selenium-webdriver/chrome';
 import axeBuilder from 'axe-webdriverjs';
 
-import { filterLinks, selectSampleSet } from './util';
+import { filterLinks, selectSampleSet, isNatural } from './util';
 import polyfills from './polyfills';
 import { outputToHTML, outputToJSON } from './output';
 import crawl from './crawler';
@@ -122,7 +122,9 @@ async function main() {
   const linkQueue = await crawl(domain, opts.depth, filterLinks(opts));
 
   logger.info(`Found ${linkQueue.size} links within ${domain}`);
-  logger.debug('Total urls to test:', Math.min(opts.check || Infinity, linkQueue.size));
+  logger.debug('Queue to be tested: ', linkQueue);
+  const numToCheck = Math.min(isNatural(opts.check) ? opts.check : Infinity, linkQueue.size);
+  logger.debug(`Based on options, testing ${numToCheck} urls`);
   if (opts.random > 0 && opts.random < 1) {
     logger.debug(`Selecting random sample ${opts.random} of total`);
   } else {
@@ -137,7 +139,7 @@ async function main() {
   Promise.all([...linkQueue]
     .reduce(selectSampleSet(opts), [])
     .reduce(createURLViewSet(opts), [])
-    .slice(0, opts.check ? opts.check * opts.viewPorts.length : undefined)
+    .slice(0, numToCheck)
     .map(testPage))
     .then(generateReportSaveFn(opts))
     .catch(logger.error);

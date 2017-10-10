@@ -43,7 +43,7 @@ export function queueLinks(pageContent, filterFn = x => true) {
       .map(getHref(links))
       .filter(url => typeof url === 'string')
       .filter(filterFn)
-      .map(url => url.replace(/^https/, 'http')));
+      .map(url => url.replace(/^https\:\/\//, 'http://')));
   }
   logger.error(Error(`Website returned an error: ${pageContent.status}`));
   return new Set();

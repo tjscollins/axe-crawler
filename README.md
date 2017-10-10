@@ -85,6 +85,10 @@ Command line arguments passed to axe-crawler override config file settings and t
 
 --quiet
     Silence all logging output.
+
+--dryRun
+    Shortcut for '--check 0 --verbose debug' Useful for seeing what would be tested before 
+    running actual tests.
 ```
 
 ### Config File Options

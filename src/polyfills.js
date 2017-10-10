@@ -17,12 +17,12 @@ export default function polyfills() {
   const concat = Function.bind.call(Function.call, Array.prototype.concat);
   const keys = Reflect.ownKeys;
 
-  Set.prototype.difference = (setB) => {
-    const difference = new Set(this);
+  Set.prototype.difference = function difference(setB) {
+    const diff = new Set(this);
     for (const elem of setB) {
-      difference.delete(elem);
+      diff.delete(elem);
     }
-    return difference;
+    return diff;
   };
 
   if (!Object.entries) {
@@ -34,6 +34,8 @@ export default function polyfills() {
   }
 
   if (!Array.prototype.last) {
-    Array.prototype.last = () => this[this.length - 1];
+    Array.prototype.last = function last() {
+      return this[this.length - 1];
+    };
   }
 }

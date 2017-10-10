@@ -87,15 +87,15 @@ export default function crawlerOpts() {
     }
   }
 
-  if (argv.verbose) {
-    process.verbose = argv.verbose;
+  logger.configure(argv.verbose);
+
+  if (argv.dryRun) {
+    argv.check = 0;
+    logger.configure('debug');
   }
 
   if (argv.hasOwnProperty('quiet')) {
-    delete argv.verbose;
-    process.quiet = true;
-  } else {
-    process.quiet = false;
+    logger.configure('quiet');
   }
 
   const optsFile = argv.configFile || DEFAULT_FILE;
@@ -106,8 +106,8 @@ export default function crawlerOpts() {
     if (err.code === 'ENOENT' && err.path === optsFile) {
       logger.error('No config file found');
     } else if (err instanceof SyntaxError) {
-      console.error(`Invalid JSON config file ${optsFile}`);
-      console.error('Ignoring JSON config file...');
+      logger.error(`Invalid JSON config file ${optsFile}`);
+      logger.error('Ignoring JSON config file...');
     }
   }
   return Object.assign(DEFAULT_OPTS, jsonOpts, argv);
