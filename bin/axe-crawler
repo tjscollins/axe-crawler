@@ -170,6 +170,15 @@ function error(...args) {
 }
 
 /**
+ * Forced logging regardles of verbose settings
+ *
+ * @param {any} args
+ */
+function force(...args) {
+  console.log(...args);
+}
+
+/**
  * Configure logger to supplied logging level.  Default to 'error'
  *
  * @param {string} level
@@ -195,6 +204,7 @@ var logger = {
   info,
   error,
   debug,
+  force,
   configure
 };
 
@@ -656,12 +666,13 @@ function crawlerOpts() {
     }
   }
 
-  logger.configure(argv.verbose);
-
   if (argv.dryRun) {
+    argv.verbose = argv.verbose || 'debug';
+    logger.force(`Performing dry run with ${argv.verbose} level logging`);
     argv.check = 0;
-    logger.configure('debug');
   }
+
+  logger.configure(argv.verbose);
 
   if (argv.hasOwnProperty('quiet')) {
     logger.configure('quiet');
@@ -734,7 +745,6 @@ let main = (() => {
     // Read config
     const opts = crawlerOpts();
     const domain = opts.domains.last();
-    process.verbose = opts.verbose;
 
     logger.debug('Crawling with options: \n', opts);
 
