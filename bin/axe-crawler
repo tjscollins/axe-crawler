@@ -84,6 +84,11 @@ function filterLinks(opts) {
   return link => validator.isURL(link) && notMedia(link) && matchDomain(opts.domains.last())(link) && whiteListRegex.test(link) && (opts.whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
 }
 
+function isNatural(num) {
+  if (num < 0) return false;
+  return Number.isInteger(num);
+}
+
 /**
  * @fileOverview Polyfills for axe-crawler
  * @name polyfills.js
@@ -96,17 +101,19 @@ function filterLinks(opts) {
  *
  */
 function polyfills() {
+  /* eslint-disable no-extend-native */
+
   const reduce = Function.bind.call(Function.call, Array.prototype.reduce);
   const isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
   const concat = Function.bind.call(Function.call, Array.prototype.concat);
   const keys = Reflect.ownKeys;
 
-  Set.prototype.difference = function (setB) {
-    const difference = new Set(this);
+  Set.prototype.difference = function difference(setB) {
+    const diff = new Set(this);
     for (const elem of setB) {
-      difference.delete(elem);
+      diff.delete(elem);
     }
-    return difference;
+    return diff;
   };
 
   if (!Object.entries) {
@@ -116,7 +123,7 @@ function polyfills() {
   }
 
   if (!Array.prototype.last) {
-    Array.prototype.last = function () {
+    Array.prototype.last = function last() {
       return this[this.length - 1];
     };
   }
@@ -130,43 +137,65 @@ function polyfills() {
  */
 
 /**
- * debug -- pass to console.log if process.verbose
+ * debug -- pass to console.log if process.verbose == debug
  *
  * @param {any[]} args
  */
 function debug(...args) {
   if (process.verbose === 'debug' && !process.quiet) {
-    console.log(...args);
+    console.log('DEBUG:', ...args);
   }
 }
 
 /**
- * info -- pass to console.log if process.verbose
+ * info -- pass to console.log if process.verbose >= info
  *
  * @param {any[]} args
  */
 function info(...args) {
   if (!process.quiet && (process.verbose === 'info' || process.verbose === 'debug')) {
-    console.log(...args);
+    console.log('INFO:', ...args);
   }
 }
 
 /**
- * error -- pass to console.error if process.verbose
+ * error -- pass to console.error if process.verbose >= error
  *
  * @param {any[]} args
  */
 function error(...args) {
-  console.log('Error logger called', process.verbose);
   if (process.verbose !== undefined && !process.quiet) {
-    console.error(...args);
+    console.error('ERROR:', ...args);
+  }
+}
+
+/**
+ * Configure logger to supplied logging level.  Default to 'error'
+ *
+ * @param {string} level
+ */
+function configure(level) {
+  switch (level) {
+    case 'info':
+      process.verbose = 'info';
+      break;
+    case 'debug':
+      process.verbose = 'debug';
+      break;
+    case 'quiet':
+      process.quiet = true;
+      break;
+    default:
+      process.verbose = 'error';
+      break;
   }
 }
 
 var logger = {
   info,
   error,
-  debug
+  debug,
+  configure
 };
 
 /**
@@ -186,7 +215,7 @@ function outputToJSON(file, reports) {
  *
  * @param {object} reports
  */
-function outputToHTML(file, reports) {
+function outputToHTML(file, reports, opts) {
   let head = '<!doctype html> <html lang="en"><head>';
   head += `<title>aXe Accessibility Engine Report ${new Date().toDateString()}</title>`;
   head += '<meta name="viewport" content="width=device-width, initial-scale=1">';
@@ -196,7 +225,12 @@ function outputToHTML(file, reports) {
 
   let body = '</head><body><div class="container"><div class="row"><div class="col-xs-12">';
   body += marked(`# aXe Accessibility Engine Report ${new Date().toDateString()}`);
-  body += `${marked('This report is not a complete accessibility audit.  This report only documents those accessibility features tested by the axe-core library, and should not be considered exhaustive of the possible accessibility issues a website may have.  Use this report as a tool in a complete and comprehensive process of reviewing this site for accessibility issues.  More information regarding the features tested by the axe-core library may be found at [axe-core.org](https://axe-core.org/)')}</div></div>`;
+  body += marked('This report is not a complete accessibility audit.  This report only documents those accessibility features tested by the axe-core library, and should not be considered exhaustive of the possible accessibility issues a website may have.  Use this report as a tool in a complete and comprehensive process of reviewing this site for accessibility issues.  More information regarding the features tested by the axe-core library may be found at [axe-core.org](https://axe-core.org/)');
+
+  if (opts.random !== 1) {
+    body += marked(`This report represents only a random sample of ${Math.round(opts.random * 100)}% of all webpages on this domain.`);
+  }
+
   body += '<div class="row"><div class="col-xs-12">';
 
   function countResults(report, type) {
@@ -464,9 +498,9 @@ function queueLinks(pageContent, filterFn = x => true) {
   if (pageContent.status === 200) {
     const links = cheerio.load(pageContent.data)('a');
 
-    return new Set(Object.keys(links).map(getHref(links)).filter(url => typeof url === 'string').filter(filterFn).map(url => url.replace(/^https/, 'http')));
+    return new Set(Object.keys(links).map(getHref(links)).filter(url => typeof url === 'string').filter(filterFn).map(url => url.replace(/^https\:\/\//, 'http://')));
   }
-  console.log(Error(`Website returned an error: ${pageContent.status}`));
+  logger.error(Error(`Website returned an error: ${pageContent.status}`));
   return new Set();
 }
 
@@ -622,15 +656,15 @@ function crawlerOpts() {
     }
   }
 
-  if (argv.verbose) {
-    process.verbose = argv.verbose;
+  logger.configure(argv.verbose);
+
+  if (argv.dryRun) {
+    argv.check = 0;
+    logger.configure('debug');
   }
 
   if (argv.hasOwnProperty('quiet')) {
-    delete argv.verbose;
-    process.quiet = true;
-  } else {
-    process.quiet = false;
+    logger.configure('quiet');
   }
 
   const optsFile = argv.configFile || DEFAULT_FILE;
@@ -641,8 +675,8 @@ function crawlerOpts() {
     if (err.code === 'ENOENT' && err.path === optsFile) {
       logger.error('No config file found');
     } else if (err instanceof SyntaxError) {
-      console.error(`Invalid JSON config file ${optsFile}`);
-      console.error('Ignoring JSON config file...');
+      logger.error(`Invalid JSON config file ${optsFile}`);
+      logger.error('Ignoring JSON config file...');
     }
   }
   return Object.assign(DEFAULT_OPTS, jsonOpts, argv);
@@ -668,10 +702,10 @@ let testPage = (() => {
     const driver = new webDriver.Builder().forBrowser('chrome').setChromeOptions(options).build();
     let outputReport = null;
     yield driver.get(url).then(function () {
-      logger.info('Testing: ', url, name);
+      logger.info(`Testing ${url} ${name}`);
       axeBuilder(driver).analyze(function (results) {
         outputReport = results;
-        logger.debug(`Results for ${url} received`);
+        logger.debug(`Results for ${url} ${name} received`);
       });
     }).then(function () {
       return driver.close();
@@ -708,9 +742,11 @@ let main = (() => {
     const linkQueue = yield crawl(domain, opts.depth, filterLinks(opts));
 
     logger.info(`Found ${linkQueue.size} links within ${domain}`);
-    logger.debug('Total urls to test:', Math.min(opts.check || Infinity, linkQueue.size));
+    logger.debug('Queue to be tested: ', linkQueue);
+    const numToCheck = Math.min(isNatural(opts.check) ? opts.check : Infinity, linkQueue.size);
+    logger.info(`Based on options, testing ${numToCheck} urls`);
     if (opts.random > 0 && opts.random < 1) {
-      logger.debug(`Selecting random sample ${opts.random} of total`);
+      logger.info(`Selecting random sample ${opts.random} of total`);
     } else {
       opts.random = 1;
     }
@@ -720,7 +756,7 @@ let main = (() => {
     });
 
     // Test each link
-    Promise.all([...linkQueue].reduce(selectSampleSet(opts), []).reduce(createURLViewSet(opts), []).slice(0, opts.check ? opts.check * opts.viewPorts.length : undefined).map(testPage)).then(generateReportSaveFn(opts)).catch(logger.error);
+    Promise.all([...linkQueue].reduce(selectSampleSet(opts), []).reduce(createURLViewSet(opts), []).slice(0, numToCheck).map(testPage)).then(generateReportSaveFn(opts)).catch(logger.error);
   });
 
   return function main() {
@@ -762,12 +798,13 @@ function resultsToReports(reports, { result, viewPort }) {
  * @param {Object} globalOptions
  * @returns {Function} callback function to print results of axe-core tests.
  */
-function generateReportSaveFn({ output }) {
+function generateReportSaveFn(opts) {
+  const { output } = opts;
   return results => {
     logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
     const reports = results.reduce(resultsToReports, {});
     outputToJSON(`${output}.json`, reports);
-    outputToHTML(`${output}.html`, reports);
+    outputToHTML(`${output}.html`, reports, opts);
   };
 }
 
