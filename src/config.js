@@ -87,12 +87,13 @@ export default function crawlerOpts() {
     }
   }
 
-  logger.configure(argv.verbose);
-
   if (argv.dryRun) {
+    argv.verbose = argv.verbose || 'debug';
+    logger.force(`Performing dry run with ${argv.verbose} level logging`);
     argv.check = 0;
-    logger.configure('debug');
   }
+
+  logger.configure(argv.verbose);
 
   if (argv.hasOwnProperty('quiet')) {
     logger.configure('quiet');
