@@ -115,7 +115,6 @@ async function main() {
   // Read config
   const opts = crawlerOpts();
   const domain = opts.domains.last();
-  process.verbose = opts.verbose;
 
   logger.debug('Crawling with options: \n', opts);
 
