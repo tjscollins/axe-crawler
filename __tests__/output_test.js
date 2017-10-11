@@ -31,7 +31,7 @@ describe('outputToHTML', () => {
       const reports = JSON.parse(res);
       jest.mock('fs');
 
-      outputToHTML('html-output', reports);
+      outputToHTML('html-output', reports, { random: false });
 
       expect(fs.writeFile.mock.calls.length).toBe(1);
       expect(fs.writeFile.mock.calls[0][0]).toBe('html-output');
