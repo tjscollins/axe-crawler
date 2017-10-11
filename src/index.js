@@ -90,15 +90,16 @@ async function testPage(testCase) {
     .setChromeOptions(options)
     .build();
   let outputReport = null;
-  await driver.get(url)
-    .then(() => {
-      logger.info(`Testing ${url} ${name}`);
-      axeBuilder(driver)
-        .analyze((results) => {
-          outputReport = results;
-          logger.debug(`Results for ${url} ${name} received`);
-        });
-    }).then(() => driver.close());
+
+  await driver.get(url);
+  logger.info(`Testing ${url} ${name}`);
+  await axeBuilder(driver)
+    .analyze((results) => {
+      outputReport = results;
+      logger.debug(`Results for ${url} ${name} received`);
+    });
+  await driver.close();
+
   return {
     result: outputReport,
     viewPort: testCase.viewPort,
