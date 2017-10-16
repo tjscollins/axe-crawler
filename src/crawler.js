@@ -12,11 +12,12 @@ import cheerio from 'cheerio';
 import logger from './logger';
 
 /**
- * Helper function to pull the href attribute off a DOM
- * node
+ * Generates a helper function to pull the href attribute off a DOM
+ * anchor node
  *
+ * @param {string} currentURL
  * @param {DOMNode[]} links
- * @returns {string|null}
+ * @returns {Function}
  */
 function getHref(currentURL, links) {
   return (key) => {
