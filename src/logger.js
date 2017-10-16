@@ -1,12 +1,5 @@
 /**
- * @fileOverview Log based on configured verbosity
- * @name logger.js
- * @author Tyler Collins
- * @license MIT
- */
-
-/**
- * debug -- pass to console.log if process.verbose == debug
+ * Pass arguments to console.log if process.verbose == debug
  *
  * @param {any[]} args
  */
@@ -17,7 +10,7 @@ function debug(...args) {
 }
 
 /**
- * info -- pass to console.log if process.verbose >= info
+ * Pass arguments to console.log if process.verbose >= info
  *
  * @param {any[]} args
  */
@@ -28,7 +21,7 @@ function info(...args) {
 }
 
 /**
- * error -- pass to console.error if process.verbose >= error
+ * Pass arguments to console.error if process.verbose >= error
  *
  * @param {any[]} args
  */
