@@ -48,7 +48,7 @@ function generateReportSaveFn(opts) {
   return (results) => {
     logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
     const reports = results.reduce(resultsToReports, {});
-    outputToJSON(`${output}.json`, reports);
+    outputToJSON(`${output}.json`, reports, opts);
     outputToHTML(`${output}.html`, reports, opts);
   };
 }
