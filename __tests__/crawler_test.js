@@ -88,17 +88,17 @@ describe('axe-crawler/src/crawler.js', () => {
 
   describe('queueLinks', () => {
     it('should parse page content and append new links to existing queue', (done) => {
-      moxios.stubRequest('test.test', {
+      moxios.stubRequest('http://test.test', {
         status: 200,
         responseText: '<a href="test.test"></a><a href="/google/relative"></a><a href="/google/relative"></a>',
       });
 
-      axios.get('test.test').then((mainPage) => {
+      axios.get('http://test.test').then((mainPage) => {
         const links = queueLinks('test.test', mainPage);
+        expect(mainPage.config.url).toBe('http://test.test');
         try {
           expect(links).toBeInstanceOf(Set);
           expect(links.size).toBe(2);
-          expect(links).toContain('test.test');
           expect(links).toContain('http://test.test/google/relative');
           done();
         } catch (err) {

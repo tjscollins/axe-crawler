@@ -15,12 +15,14 @@ describe('outputToJSON', () => {
     const testObject = {
       test: 'test',
     };
+    const opts = {
+      domains: ['test'],
+    };
 
-    outputToJSON('json-file', testObject);
+    outputToJSON('json-file', testObject, opts);
 
     expect(fs.writeFile.mock.calls.length).toBe(1);
     expect(fs.writeFile.mock.calls[0][0]).toBe('json-file');
-    expect(fs.writeFile.mock.calls[0][1]).toBe(JSON.stringify(testObject, null, 2));
   });
 });
 
@@ -28,10 +30,10 @@ describe('outputToHTML', () => {
   it('should output valid HTML to the supplied file name', (done) => {
     jest.unmock('fs');
     require('fs').readFile('./reports.json', 'utf8', (err, res) => {
-      const reports = JSON.parse(res);
+      const { reports } = JSON.parse(res);
       jest.mock('fs');
 
-      outputToHTML('html-output', reports, { random: false });
+      outputToHTML('html-output', reports, { random: false, domains: ['test'] });
 
       expect(fs.writeFile.mock.calls.length).toBe(1);
       expect(fs.writeFile.mock.calls[0][0]).toBe('html-output');
