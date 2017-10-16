@@ -18,11 +18,12 @@ import logger from './logger';
  * @param {DOMNode[]} links
  * @returns {string|null}
  */
-function getHref(domain, links) {
+function getHref(currentURL, links) {
   return (key) => {
     if (links[key].attribs) {
+      logger.debug('\nFound Link: ', '\n From: ', `\nTo: ${links[key].attribs.href}\n`);
       const link = links[key].attribs.href;
-      return link ? link.replace(new RegExp(`^(?!https?:\/\/)(?!${domain}\/)\/(\/?.*)`), `http://${domain}/$1`) : link;
+      return link ? link.replace(new RegExp(`^(?!https?:\/\/)(?!${currentURL}\/)(\/?.*)`), `${currentURL}/$1`) : link;
     }
     return null;
   };
@@ -42,9 +43,9 @@ export function queueLinks(domain, pageContent, filterFn = x => true) {
   }
   if (pageContent.status === 200) {
     const links = cheerio.load(pageContent.data)('a');
-
+    const currentURL = pageContent.config.url;
     return new Set(Object.keys(links)
-      .map(getHref(domain, links))
+      .map(getHref(currentURL, links))
       .filter(url => typeof url === 'string')
       .filter(filterFn)
       .map(url => url.replace(/^https:\/\//, 'http://')));
