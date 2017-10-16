@@ -67,6 +67,7 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/__tests__/"
-    ]
+    ],
+    "verbose": true
   }
 }
