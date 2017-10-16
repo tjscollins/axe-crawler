@@ -142,8 +142,8 @@ async function main() {
   // Test each link
   Promise.all([...linkQueue]
     .reduce(selectSampleSet(opts), [])
-    .reduce(createURLViewSet(opts), [])
     .slice(0, numToCheck)
+    .reduce(createURLViewSet(opts), [])
     .map(testPage))
     .then(generateReportSaveFn(opts))
     .catch(logger.error);
