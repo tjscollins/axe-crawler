@@ -5,6 +5,7 @@
  * @license MIT
  */
 import { isURL } from 'validator';
+import logger from './logger';
 
 /**
  * if opts.random is set, create filter fn to filter urls to create
@@ -73,11 +74,13 @@ export function filterLinks(opts) {
   const ignoreRegex = new RegExp(opts.ignore || '^$');
   const whiteListRegex = new RegExp(opts.whitelist || '.*');
 
-  return link => isURL(link) &&
+  return link =>
+    isURL(link) &&
     notMedia(link) &&
     matchDomain(opts.domains.last())(link) &&
     whiteListRegex.test(link) &&
-    (opts.whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
+    (opts.whitelist ? true : !ignoreRegex.test(link)) // whitelist overrides ignore
+  ;
 }
 
 export function isNatural(num) {

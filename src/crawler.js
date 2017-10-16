@@ -20,11 +20,12 @@ import logger from './logger';
  * @returns {Function}
  */
 function getHref(currentURL, links) {
+  const currentDomain = currentURL.replace(new RegExp('^(https?://(\\w+\\.?)+)/(.*)$'), '$1');
   return (key) => {
     if (links[key].attribs) {
-      logger.debug('\nFound Link: ', '\n From: ', `\nTo: ${links[key].attribs.href}\n`);
+      logger.debug('\nFound Link: ', `\n From: ${currentURL}`, `\nTo: ${links[key].attribs.href}\n`);
       const link = links[key].attribs.href;
-      return link ? link.replace(new RegExp(`^(?!https?:\/\/)(?!${currentURL}\/)(\/?.*)`), `${currentURL}/$1`) : link;
+      return link ? link.replace(new RegExp(`^(?!https?://)(?!${currentURL}/)(/?)(.*)`), `${currentDomain}/$2`) : link;
     }
     return null;
   };
@@ -45,6 +46,7 @@ export function queueLinks(domain, pageContent, filterFn = x => true) {
   if (pageContent.status === 200) {
     const links = cheerio.load(pageContent.data)('a');
     const currentURL = pageContent.config.url;
+    // console.log(pageContent.config);
     return new Set(Object.keys(links)
       .map(getHref(currentURL, links))
       .filter(url => typeof url === 'string')
@@ -95,22 +97,23 @@ export default async function crawl(domain, depth = 5, filterFn) {
 
   // Scrape main url
   const mainPage = await axios.get(url).catch(logger.error);
-
+  logger.debug('Crawling for links at DEPTH 0');
   const allLinks = await queueLinks(domain, mainPage, filterFn);
   let links = new Set([...allLinks]);
 
   for (let i = 1; i < depth; i += 1) {
-    const promisedLinks = [...links].map(axios.get);
-    const linkedContent = await Promise.all(promisedLinks)
-      .catch((err) => {
-        logger.error(`\n${err}\n${err.config.url}\n`);
-        return promisedLinks;
-      });
+    logger.debug(`Crawling for links at DEPTH ${i}`);
+    const promisedLinks = [...links]
+      .map(axios.get)
+      .map(request => request.catch(err => err));
+    const linkedContent = await Promise.all(promisedLinks);
 
     links = linkedContent
+      .filter(content => !(content instanceof Error))
       .map(newPage => queueLinks(domain, newPage, filterFn))
       .reduce(combineLinkSets, new Set())
       .difference(allLinks);
+
     if (links.size === 0) {
       i = depth;
     }
