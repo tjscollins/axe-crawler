@@ -94,12 +94,12 @@ describe('axe-crawler/src/crawler.js', () => {
       });
 
       axios.get('test.test').then((mainPage) => {
-        const links = queueLinks(mainPage);
+        const links = queueLinks('test.test', mainPage);
         try {
           expect(links).toBeInstanceOf(Set);
           expect(links.size).toBe(2);
           expect(links).toContain('test.test');
-          expect(links).toContain('/google/relative');
+          expect(links).toContain('http://test.test/google/relative');
           done();
         } catch (err) {
           done(err);
