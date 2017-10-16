@@ -82,28 +82,31 @@ function createURLViewSet(globalOptions) {
  * @param {number} testCase.viewPort.height
  */
 async function testPage(testCase) {
-  const { url, viewPort: { name, width, height } } = testCase;
+  logger.debug('Test case: ', testCase);
+  const { url, viewPort: { name, width, height }, viewPort } = testCase;
   const options = new chromeDriver.Options();
   options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
   const driver = new webDriver.Builder()
     .forBrowser('chrome')
     .setChromeOptions(options)
     .build();
-  let outputReport = null;
 
-  await driver.get(url);
-  logger.info(`Testing ${url} ${name}`);
-  await axeBuilder(driver)
-    .analyze((results) => {
-      outputReport = results;
-      logger.debug(`Results for ${url} ${name} received`);
+  const outputReport = await new Promise((resolve, reject) => {
+    logger.info(`Getting ${url}`);
+    driver.get(url).then(() => {
+      logger.info(`Testing ${url} ${name}`);
+      axeBuilder(driver)
+        .analyze((result, err) => {
+          if (err) {
+            reject(err);
+          }
+          logger.debug(`Results for ${url} ${name} received`);
+          resolve({ result, viewPort });
+          driver.close();
+        });
     });
-  await driver.close();
-
-  return {
-    result: outputReport,
-    viewPort: testCase.viewPort,
-  };
+  });
+  return outputReport;
 }
 
 /**
