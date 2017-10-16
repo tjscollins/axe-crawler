@@ -23,9 +23,12 @@ function getHref(currentURL, links) {
   const currentDomain = currentURL.replace(new RegExp('^(https?://(\\w+\\.?)+)/(.*)$'), '$1');
   return (key) => {
     if (links[key].attribs) {
-      logger.debug('\nFound Link: ', `\n From: ${currentURL}`, `\nTo: ${links[key].attribs.href}\n`);
       const link = links[key].attribs.href;
-      return link ? link.replace(new RegExp(`^(?!https?://)(?!${currentURL}/)(/?)(.*)`), `${currentDomain}/$2`) : link;
+      if (link) {
+        return link
+          .replace(new RegExp(`^(?!https?://)(?!${currentURL}/)(/?)(.*)`), `${currentDomain}/$2`)
+          .replace(new RegExp(`^${currentDomain}//`), 'http://');
+      }
     }
     return null;
   };
