@@ -54,13 +54,12 @@ export function isDoc(url) {
 }
 
 /**
- * matchDomain - returns a function to filter urls not matching domain
+ * Returns a function to filter urls not matching domain
  *
  * @param {string} domain
  */
 export function matchDomain(domain) {
-  return url => new RegExp(domain).test(url) ||
-            /^\/\w+/.test(url);
+  return url => new RegExp(`^https?://([\\w&&[^\\?=\\&\\.]]*\\.?)*?${domain}/?.*$`).test(url) || /^\/\w+/.test(url);
 }
 
 /**
