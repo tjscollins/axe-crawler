@@ -12,7 +12,7 @@ import cheerio from 'cheerio';
 import logger from './logger';
 
 /**
- * getHref -- helper function to pull the href attribute off a DOM
+ * Helper function to pull the href attribute off a DOM
  * node
  *
  * @param {DOMNode[]} links
@@ -30,7 +30,7 @@ function getHref(currentURL, links) {
 }
 
 /**
- * queueLinks - parses page content and appends all links on the page to existing queue.
+ * Parses page content and appends all links on the page to existing queue.
  *
  * @param {Promise} pageContent axios response containing page data to be
  * parsed
@@ -54,8 +54,7 @@ export function queueLinks(domain, pageContent, filterFn = x => true) {
 }
 
 /**
- * combineLinkSets - helper function that reduces an array of sets to a single
- * set.
+ * Reducer function that reduces an array of sets to a single set.
  *
  * @param {Set<string>} urlList
  * @param {Set<string>} urlSet
@@ -72,7 +71,7 @@ export function combineLinkSets(urlList, urlSet) {
 }
 
 /**
- * crawl - Crawls through page links and builds a set of all pages to test.
+ * Crawls through page links and builds a set of all pages to test.
  * Goes 5 levels deep through links checking for new pages by default
  *
  * @param {String} domain domain to crawl through
