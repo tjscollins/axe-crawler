@@ -11,6 +11,8 @@ import escape from 'escape-html';
 
 import logger from './logger';
 
+const CSS_STYLES = '<style> h1 { text-align: center; } ol > li { padding-bottom: 15px; font-weight: 500 } ul > li { font-weight: 400; font-size: 12px; } ol > li > span { font-weight: 400; } thead th { text-align: center; } tr { border: 1px solid lightsalmon; } tbody th, tbody td { padding: 5px; text-align: left;    vertical-align: text-top; font-weight: normal; } table.summary-table { width: 100%; }</style>';
+
 export function outputToJSON(file, reports, opts) {
   const fullReport = {
     date: new Date().toString(),
@@ -36,34 +38,27 @@ function printViewCounts(body, report, reportType) {
   /* eslint-enable no-param-reassign */
 }
 
+function testResultList(report, type) {
+  const resultList = new Set();
+  Object.entries(report[type]).forEach(([view, tests]) => {
+    tests.forEach(({ description }) => {
+      resultList.add(`* ${escape(description)}\n`);
+    });
+  });
+
+  return resultList.size > 0 ? marked([...resultList].reduce((list, item) => list + item, '')) : `No ${type} detected by axe-core`;
+}
+
 function summaryTable(reports, opts) {
   let table = marked('## Summary of Overall Test Results');
   table += '<table class="summary-table"><thead><tr><th scope="col">URL</th><th scope="col">Failing Tests</th><th scope="col">Passing Tests</th></thead><tbody>';
+
   Object.entries(reports).forEach(([url, report]) => {
     table += `<tr><th scope="row">${url}</th>`;
-
-    const violationList = new Set();
-    Object.entries(report.violations).forEach(([view, tests]) => {
-      tests.forEach(({ description }) => {
-        violationList.add(`* ${escape(description)}\n`);
-      });
-    });
-
-    const markedViolations = violationList.size > 0 ? marked([...violationList].reduce((list, item) => list + item, '')) : 'No violations detected by axe-core';
-    table += `<td>${markedViolations}</td>`;
-
-    const passList = new Set();
-    Object.entries(report.passes).forEach(([view, tests]) => {
-      tests.forEach(({ description }) => {
-        passList.add(`* ${escape(description)}\n`);
-      });
-    });
-
-    const markedPasses = violationList.size > 0 ? marked([...passList].reduce((list, item) => list + item, '')) : 'No passing tests detected by axe-core';
-    table += `<td>${markedPasses}</td></tr>`;
+    table += `<td>${testResultList(report, 'violations')}</td>`;
+    table += `<td>${testResultList(report, 'passes')}</td></tr>`;
   });
 
-  table += Object.entries(reports).reduce((tbl, [url, report]) => ' ', reports, '');
   table += '</tbody></table>';
   return table;
 }
@@ -82,7 +77,7 @@ export function outputToHTML(file, reports, opts) {
   head += '<meta name="viewport" content="width=device-width, initial-scale=1">';
   head += '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.8.0/github-markdown.css">';
   head += '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">';
-  head += '<style> h1 { text-align: center; } ol > li { padding-bottom: 15px; font-weight: 500 } ul > li { font-weight: 400; font-size: 12px; } ol > li > span { font-weight: 400; } thead th { text-align: center; } tr { border: 1px solid lightsalmon; } tbody th, tbody td { padding: 5px; text-align: left;    vertical-align: text-top; font-weight: normal; }</style>';
+  head += CSS_STYLES;
 
   let body = '</head><body><div class="container"><div class="row"><div class="col-xs-12">';
   body += marked(`# ${titleString}`);
