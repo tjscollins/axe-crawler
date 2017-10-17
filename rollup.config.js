@@ -1,5 +1,7 @@
 // rollup.config.js
 import babel from 'rollup-plugin-babel';
+import uglify from 'rollup-plugin-uglify';
+import { minify } from 'uglify-es';
 
 export default {
   // core input options
@@ -7,6 +9,7 @@ export default {
   // external,
   plugins: [
     babel(),
+    uglify({}, minify),
   ],
 
   // advanced input options
