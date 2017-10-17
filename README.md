@@ -4,7 +4,7 @@
 
 axe-crawler is a Node.js webcrawler which tests every page it can find in a single domain using the [axe-core](https://github.com/dequelabs/axe-core) accessibility testing library.
 
-axe-crawler produces a detailed html summary report of the accessibility issues it finds on pages in the domain in addition to raw JSON data output from the tests.  
+axe-crawler produces a detailed html summary report of the accessibility issues it finds on pages in the domain in addition to raw JSON data output from the tests.
 
 ***WARNING: Depending on the number of tests run (urls x viewPorts) the raw JSON data output can be quite large, easily in the tens of megabytes.  Use the --check, --random, and --viewPort options to control which pages are tested.***
 
@@ -21,11 +21,11 @@ axe-crawler defaults to crawling through all links it can find WITHIN the provid
 ```
 axe-crawler mydomain.org
 ```
-then axe-crawler will parse `http://mydomain.org` for all links it finds and build a queue of unique links.  It will then visit those links and look for new links to add to its queue.  Because it uses a Javascript Set to build the queue of unique links, it will only queue each url once.
+then axe-crawler will use [axios](https://github.com/axios/axios) to get `http://mydomain.org` and then parse the result for all links it can find, building a queue of unique links.  It will then visit those links and look for new links to add to its queue.  Because it uses a Javascript Set (and some regex magic to make relative urls into absolute urls) to build the queue of unique links, it will queue each url only once.
 
 By default, axe-crawler ignores links that end in common media or document extensions (.mp3, .avi, .pdf, .docx, etc.)
 
-When axe-crawler finishes crawling through the domain to the specified depth (default: 5), or when it stops finding new links, it then uses selenium, chrome-driver, and axe-core to open a headless Chrome browser and test each link in the queue for accessibility at each specified viewPort resolution (default: mobile, tablet_vertical, tablet_horizontal, and desktop).
+When axe-crawler finishes crawling through the domain to the specified depth (default: 5), or when it stops finding new links, it then uses selenium, chrome-driver, and axe-core to open a headless Chrome browser and test each link in the queue for accessibility at each specified viewPort resolution (default: mobile, tablet\_vertical, tablet\_horizontal, and desktop).
 
 Each url found will be visited a total of once + the number of viewPorts specified (default: 5 times total).  In order to avoid overloading servers the selenium driven requests are done synchronously rather than asynchronously.
 
@@ -33,7 +33,13 @@ Each url found will be visited a total of once + the number of viewPorts specifi
 
 ## Configuration
 
-Most parameters of axe-crawler are configurable at the command line or with a JSON config file named `.axe-crawler.json` in the current directory.
+Most parameters of axe-crawler are configurable at the command line or with a JSON config file named `.axe-crawler.json` in the current directory.  The correct syntax for command line options is
+
+```
+axe-crawler mydomain.org --option1 value --option2 value --option3 ...
+```
+
+Placing options first and domain last will sometimes cause the domain to be read as the value of an option resulting in an error.
 
 ### Command Line Options
 
@@ -43,33 +49,35 @@ Command line arguments passed to axe-crawler override config file settings and t
     Specify how many levels deep you want the crawler to scrape for new links.
     Default: 5.
 
+--ignore regex
+    Specify a regular expression that identifies URLs you wish to ignore.
+    Overridden by whitelist regex if both are specified.  Defaults to matching
+    empty strings (i.e. /^$/) if unspecified.  Regexes are applied before urls
+    are added to the queue.
+
+--whitelist regex
+    Specify a regular expression that identifies URLs that you wish to whitelist,
+    completely overriding the ignore regex if specicified.  Default: false (i.e.
+    no regex).  Regexes are applied before urls are added to the queue.
+
+--random p
+    Specify the rate at which to randomly select pages from the website.  Axe-crawler
+    will first build a queue of all pages that it can find and then reduce that
+    queue to the sampling rate given by this option.  p represents the probably
+    any single link will be chosen. 0 < p < 1 . Default: 1 (i.e. 100%)
+
 --check n
     Specify the maximum number of URLs you want to actually test from the queue.
     Useful for testing the crawler and seeing what links it finds without running
     the axe-core tests on every URL.  Default: undefined which checks all links
-    in the queue.
-
---random p
-    Specify the rate at which to randomly select pages from the website.  Crawler
-    will first build a queue of all pages that it can find and then reduce that
-    queue to the sampling rate given by this option.  p represents the probably
-    any single link will be chosen. 0 < p < 1 . Default: 1 (i.e. 100%)
+    in the queue.  This option is applied after randomly selecting from the queue
+    when random selection is enabled.
 
 --viewPorts viewportString
     Specify which viewPorts to use when running accessibility tests.  Useful for
     sites where visibile markup on mobile screen sizes differs substantially from
     other screen sizes.  Format is name:WIDTHxHEIGHT,... Default: mobile:360x640,
     table_vertical:768x1024,table_horizontal:1024x768,desktop:1440x900
-
---ignore regex
-    Specify a regular expression that identifies URLs you wish to ignore.
-    Overridden by whitelist regex if both are specified.  Defaults to matching
-    empty strings (i.e. /^$/) if unspecified.
-
---whitelist regex
-    Specify a regular expression that identifies URLs that you wish to whitelist,
-    completely overriding the ignore regex if specicified.  Default: false (i.e.
-    no regex)
 
 --output outputFilePrefix
     Specify the prefix for your output file names which will be
@@ -87,7 +95,7 @@ Command line arguments passed to axe-crawler override config file settings and t
     Silence all logging output.
 
 --dryRun
-    Shortcut for '--check 0 --verbose debug' Useful for seeing what would be tested before 
+    Shortcut for '--check 0 --verbose debug' Useful for seeing what would be tested before
     running actual tests.
 ```
 
@@ -131,5 +139,4 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
 
 ## Planned Features
 
-* Better error reporting and handling esp. for bad configuration and broken links
 * Oauth functionality for testing pages behind logins
