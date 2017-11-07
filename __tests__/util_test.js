@@ -125,7 +125,7 @@ describe('axe-crawler/src/util.js', () => {
       ];
       it('should return true for valid URLs', () => {
         const results = URLS.map(filterLinks({
-          domains: ['example'],
+          domain: 'example',
         }));
 
         expect(results).toEqual([true, true, true, true, true, true, true, true, true, true]);
@@ -133,7 +133,7 @@ describe('axe-crawler/src/util.js', () => {
 
       it('should return false for urls matching opts.ignore', () => {
         const results = URLS.map(filterLinks({
-          domains: ['example'],
+          domain: 'example',
           ignore: 'www',
         }));
 
@@ -142,7 +142,7 @@ describe('axe-crawler/src/util.js', () => {
 
       it('should return true for urls matching opts.whitelist', () => {
         const results = URLS.map(filterLinks({
-          domains: ['example'],
+          domain: 'example',
           whitelist: 'net',
         }));
 

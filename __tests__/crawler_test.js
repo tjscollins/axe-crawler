@@ -5,6 +5,7 @@ import fs from 'fs';
 
 import polyfills from '../src/polyfills';
 import crawl, { combineLinkSets, queueLinks } from '../src/crawler';
+import Logger from '../src/logger';
 
 polyfills();
 
@@ -34,7 +35,7 @@ describe('axe-crawler/src/crawler.js', () => {
         responseText: fs.readFileSync('__tests__/html/page3.html'),
       });
 
-      const result = await crawl('test.test', 5);
+      const result = await crawl('test.test', { depth: 5, logger: new Logger('quiet') });
 
       expect(result).toBeInstanceOf(Set);
       expect(result.size).toBe(3);
@@ -57,7 +58,7 @@ describe('axe-crawler/src/crawler.js', () => {
         responseText: fs.readFileSync('__tests__/html/page3.html'),
       });
 
-      const result = await crawl('test.test', 1);
+      const result = await crawl('test.test', { depth: 1, logger: new Logger('quiet') });
       expect(result).toBeInstanceOf(Set);
       expect(result.size).toBe(2);
       done();
@@ -69,7 +70,7 @@ describe('axe-crawler/src/crawler.js', () => {
         reponseText: 'No requests should be made',
       });
 
-      const result = await crawl('test.test', 0);
+      const result = await crawl('test.test', { depth: 0, logger: new Logger('quiet') });
       expect(result).toBeInstanceOf(Set);
       expect(result.size).toBe(1);
       done();
@@ -78,7 +79,7 @@ describe('axe-crawler/src/crawler.js', () => {
     it('should thrown an error if supplied domain doesn\'t result in valid url', async (done) => {
       try {
         await crawl('http://test/test');
-        done(Error('crawl did not throw an error'));
+        done(new Error('crawl did not throw an error'));
       } catch (err) {
         expect(err).toBeInstanceOf(Error);
         done();
