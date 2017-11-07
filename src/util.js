@@ -5,7 +5,6 @@
  * @license MIT
  */
 import { isURL } from 'validator';
-import logger from './logger';
 
 /**
  * if opts.random is set, create filter fn to filter urls to create
@@ -63,6 +62,28 @@ export function matchDomain(domain) {
 }
 
 /**
+ * Tests whether a link is NOT a mailto link
+ *
+ * @param {string} link
+ * @returns boolean
+ */
+function notEmailLink(link) {
+  const mailLinkRE = new RegExp('mailto:\\w+');
+  return !mailLinkRE.test(link);
+}
+
+/**
+ * Tests whether a link is NOT a same page link
+ *
+ * @param {string} link
+ * @returns boolean
+ */
+function notSamePageLink(link) {
+  const samePageLinkRE = new RegExp('https?://.*#[^/]*$');
+  return !samePageLinkRE.test(link);
+}
+
+/**
  * Generates  and returns a function to be passed to
  * Array.prototype.filter to filter an Array<string> of links.
  *
@@ -70,16 +91,18 @@ export function matchDomain(domain) {
  * @returns {Function} To be passed to Array.prototype.filter
  */
 export function filterLinks(opts) {
-  const ignoreRegex = new RegExp(opts.ignore || '^$');
-  const whiteListRegex = new RegExp(opts.whitelist || '.*');
+  const { domain, ignore, whitelist } = opts;
+  const ignoreRegex = new RegExp(ignore || '^$');
+  const whiteListRegex = new RegExp(whitelist || '.*');
 
   return link =>
     isURL(link) &&
     notMedia(link) &&
-    matchDomain(opts.domains.last())(link) &&
+    notEmailLink(link) &&
+    matchDomain(domain)(link) &&
+    // notSamePageLink(domain)(link) && // Buggy for SPA routing, disabled
     whiteListRegex.test(link) &&
-    (opts.whitelist ? true : !ignoreRegex.test(link)) // whitelist overrides ignore
-  ;
+    (whitelist ? true : !ignoreRegex.test(link)); // whitelist overrides ignore
 }
 
 export function isNatural(num) {

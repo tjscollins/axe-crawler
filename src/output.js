@@ -9,14 +9,12 @@ import fs from 'fs';
 import marked from 'marked';
 import escape from 'escape-html';
 
-import logger from './logger';
-
 const CSS_STYLES = '<style> h1 { text-align: center; } ol > li { padding-bottom: 15px; font-weight: 500 } ul > li { font-weight: 400; font-size: 12px; } ol > li > span { font-weight: 400; } thead th { text-align: center; } tr { border: 1px solid lightsalmon; } tbody th, tbody td { padding: 5px; text-align: left; vertical-align: text-top; font-weight: normal; } table.summary-table { width: 100%; }</style>';
 
-export function outputToJSON(file, reports, opts) {
+export function outputToJSON(file, reports, { domain }) {
   const fullReport = {
     date: new Date().toString(),
-    title: `aXe Accessibility Engine Results for ${opts.domains.last()}`,
+    title: `aXe Accessibility Engine Results for ${domain}`,
     reports,
   };
   const formattedJSON = JSON.stringify(fullReport, null, 2);
@@ -69,7 +67,8 @@ function summaryTable(reports, opts) {
  * @param {object} reports
  */
 export function outputToHTML(file, reports, opts) {
-  const titleString = `aXe Accessibility Engine Report for ${opts.domains.last()}  \n${new Date().toString()}`;
+  const { logger } = opts;
+  const titleString = `aXe Accessibility Engine Report for ${opts.domain}  \n${new Date().toString()}`;
 
 
   let head = '<!doctype html> <html lang="en"><head>';
@@ -120,6 +119,7 @@ export function outputToHTML(file, reports, opts) {
   body += '<div class="row"><div class="col-xs-12">';
 
   function listTestResults([view, results]) {
+    /* eslint-disable no-param-reassign */
     if (results.length > 0) {
       const list = `<h4>${view.toUpperCase()}</h4><br/><ol>${results.reduce((item, {
         description,
@@ -129,9 +129,11 @@ export function outputToHTML(file, reports, opts) {
         item += `<li>${impact ? `${impact.toUpperCase()}: ` : ''}${escape(description)}<br />`;
         item += '<span>Affected Nodes: </span><ul>';
         item += nodes.reduce(writeNodeMessages, '');
-        return item += '</ul></li>';
+        item += '</ul></li>';
+        return item;
       }, '')}`;
       body += `${list}</ol>`;
+      /* eslint-enable no-param-reassign */
     }
   }
 

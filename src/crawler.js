@@ -9,7 +9,6 @@
 import { isURL } from 'validator';
 import axios from 'axios';
 import cheerio from 'cheerio';
-import logger from './logger';
 
 /**
  * Generates a helper function to pull the href attribute off a DOM
@@ -80,13 +79,13 @@ export function combineLinkSets(urlList, urlSet) {
  * Crawls through page links and builds a set of all pages to test.
  * Goes 5 levels deep through links checking for new pages by default
  *
- * @param {String} domain domain to crawl through
- * @param {Number} depth Levels to recurse through website to find new links.
- * @param {Function} filterFn function to be used to filter out urls (e.g.
- * removeMedia, noFTP, etc.)
- * @returns {Set<String>} queue of all unique links matching filterFn
+ * @export
+ * @param {String} domain domain to crawle for links
+ * @param {any} { depth = 5, logger } Options object
+ * @param {Function} filterFn filter function to apply to list of links
+ * @returns
  */
-export default async function crawl(domain, depth = 5, filterFn) {
+export default async function crawl(domain, { depth = 5, logger }, filterFn) {
   // Validate url and throw error if invalid
   const url = `http://${domain}`;
   if (!isURL(url)) {

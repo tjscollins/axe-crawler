@@ -1,71 +1,72 @@
 /**
- * Pass arguments to console.log if process.verbose == debug
+ * Builds a logger with a supplied log level
  *
- * @param {any[]} args
+ * @class Logger
  */
-function debug(...args) {
-  if (process.verbose === 'debug' && !process.quiet) {
-    console.log('DEBUG:', ...args);
+class Logger {
+  /**
+   * Creates an instance of Logger.
+   * @param {string} level level of logging output desired
+   * @memberof Logger
+   */
+  constructor(level) {
+    switch (level) {
+      case 'info':
+        this.verbose = 'info';
+        break;
+      case 'debug':
+        this.verbose = 'debug';
+        break;
+      case 'quiet':
+        this.quiet = true;
+        break;
+      default:
+        this.verbose = 'error';
+        break;
+    }
+  }
+
+  /**
+   * Pass arguments to console.log if this.verbose == debug
+   *
+   * @param {any[]} args
+   */
+  debug(...args) {
+    if (this.verbose === 'debug' && !this.quiet) {
+      console.log('DEBUG:', ...args);
+    }
+  }
+
+  /**
+   * Pass arguments to console.log if this.verbose >= info
+   *
+   * @param {any[]} args
+   */
+  info(...args) {
+    if (!this.quiet && (this.verbose === 'info' || this.verbose === 'debug')) {
+      console.log('INFO:', ...args);
+    }
+  }
+
+  /**
+   * Pass arguments to console.error if this.verbose >= error
+   *
+   * @param {any[]} args
+   */
+  error(...args) {
+    if (this.verbose !== undefined && !this.quiet) {
+      console.error('ERROR:', ...args);
+    }
+  }
+
+  /**
+   * Forced logging regardless of verbose settings
+   *
+   * @param {any[]} args
+   */
+  force(...args) {
+    console.log(...args);
   }
 }
 
-/**
- * Pass arguments to console.log if process.verbose >= info
- *
- * @param {any[]} args
- */
-function info(...args) {
-  if (!process.quiet && (process.verbose === 'info' || process.verbose === 'debug')) {
-    console.log('INFO:', ...args);
-  }
-}
-
-/**
- * Pass arguments to console.error if process.verbose >= error
- *
- * @param {any[]} args
- */
-function error(...args) {
-  if (process.verbose !== undefined && !process.quiet) {
-    console.error('ERROR:', ...args);
-  }
-}
-
-/**
- * Forced logging regardles of verbose settings
- *
- * @param {any} args
- */
-function force(...args) {
-  console.log(...args);
-}
-
-/**
- * Configure logger to supplied logging level.  Default to 'error'
- *
- * @param {string} level
- */
-function configure(level) {
-  switch (level) {
-    case 'info':
-      process.verbose = 'info';
-      break;
-    case 'debug':
-      process.verbose = 'debug';
-      break;
-    case 'quiet':
-      process.quiet = true;
-      break;
-    default:
-      process.verbose = 'error';
-      break;
-  }
-}
-
-export default {
-  info,
-  error,
-  debug,
-  force,
-  configure,
-};
+export default Logger;

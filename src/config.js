@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import logger from './logger';
+import Logger from './logger';
 
 const fs = require('fs');
 const minimist = require('minimist');
@@ -78,7 +78,7 @@ function parseViewPortsArg(views) {
  */
 export default function crawlerOpts() {
   const argv = minimist(process.argv.slice(2));
-  argv.domains = argv._;
+  argv.domain = argv._.last();
   delete argv._;
   if (argv.viewPorts) {
     argv.viewPorts = parseViewPortsArg(argv.viewPorts);
@@ -87,17 +87,23 @@ export default function crawlerOpts() {
     }
   }
 
+  let { verbose } = argv;
   if (argv.dryRun) {
-    argv.verbose = argv.verbose || 'debug';
-    logger.force(`Performing dry run with ${argv.verbose} level logging`);
+    // if dryRun, default to verbose = debug
+    verbose = argv.verbose || 'debug';
     argv.check = 0;
   }
-
-  logger.configure(argv.verbose);
-
-  if (argv.hasOwnProperty('quiet')) {
-    logger.configure('quiet');
+  if (argv.quiet) {
+    // --quiet overrides all other verbose settings
+    verbose = 'quiet';
   }
+
+  const logger = new Logger(verbose);
+
+  if (argv.dryRun) {
+    logger.force(`Performing dry run with ${argv.verbose} level logging`);
+  }
+
 
   const optsFile = argv.configFile || DEFAULT_FILE;
   let jsonOpts = {};
@@ -111,5 +117,5 @@ export default function crawlerOpts() {
       logger.error('Ignoring JSON config file...');
     }
   }
-  return Object.assign(DEFAULT_OPTS, jsonOpts, argv);
+  return Object.assign(DEFAULT_OPTS, jsonOpts, argv, { logger, verbose });
 }

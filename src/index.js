@@ -7,33 +7,40 @@ import polyfills from './polyfills';
 import { outputToHTML, outputToJSON } from './output';
 import crawl from './crawler';
 import crawlerOpts from './config';
-import logger from './logger';
 
 /**
- * resultsToReports - function applied by Array.prototype.reduce to array of
- * results to combine for printing to reports
+ * returns curried function with access to logger
  *
- * @param {Object} reports
- * @param {Object} result
- * @param {Object} viewPort
- * @returns {Object}
+ * @param {any} { logger }
+ * @returns
  */
-function resultsToReports(reports, { result, viewPort }) {
-  try {
+function resultsToReports({ logger }) {
+  /**
+   * resultsToReports - function applied by Array.prototype.reduce to array of
+   * results to combine for printing to reports
+   *
+   * @param {Object} reports
+   * @param {Object} result
+   * @param {Object} viewPort
+   * @returns {Object}
+   */
+  return (reports, { result, viewPort }) => {
+    try {
     /* eslint-disable no-param-reassign */
-    reports[result.url] = Object.assign({
-      violations: {},
-      passes: {},
-    }, reports[result.url]);
+      reports[result.url] = Object.assign({
+        violations: {},
+        passes: {},
+      }, reports[result.url]);
 
-    reports[result.url].violations[viewPort.name] = result.violations;
-    reports[result.url].passes[viewPort.name] = result.passes;
+      reports[result.url].violations[viewPort.name] = result.violations;
+      reports[result.url].passes[viewPort.name] = result.passes;
 
     /* eslint-enable no-param-reassign */
-  } catch (err) {
-    logger.error(err);
-  }
-  return reports;
+    } catch (err) {
+      logger.error(err);
+    }
+    return reports;
+  };
 }
 
 /**
@@ -44,10 +51,10 @@ function resultsToReports(reports, { result, viewPort }) {
  * @returns {Function} callback function to print results of axe-core tests.
  */
 function generateReportSaveFn(opts) {
-  const { output } = opts;
+  const { output, logger } = opts;
   return (results) => {
     logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
-    const reports = results.reduce(resultsToReports, {});
+    const reports = results.reduce(resultsToReports(opts), {});
     outputToJSON(`${output}.json`, reports, opts);
     outputToHTML(`${output}.html`, reports, opts);
   };
@@ -60,53 +67,60 @@ function generateReportSaveFn(opts) {
  * @param {Object} globalOptions
  * @returns {Function} callback function for reduce
  */
-function createURLViewSet(globalOptions) {
+function createURLViewSet(opts) {
   return (links, url) => {
-    globalOptions.viewPorts.forEach((viewPort) => {
+    opts.viewPorts.forEach((viewPort) => {
       links.push({ url, viewPort });
     });
     return links;
   };
 }
-
 /**
- * runs axe-core tests for supplied testCase.  Returns the results of
- * that test.
+ * returns a test function with access to the logger
  *
- * @param {Object} testCase
- * @param {string} testCase.url url of the testCase
- * @param {Object} testCase.viewPort
- * @param {string} testCase.viewPort.name name of this viewPort (e.g. mobile or
- *  desktop)
- * @param {number} testCase.viewPort.width
- * @param {number} testCase.viewPort.height
+ * @param {any} { logger }
+ * @returns
  */
-async function testPage(testCase) {
-  logger.debug('Test case: ', testCase);
-  const { url, viewPort: { name, width, height }, viewPort } = testCase;
-  const options = new chromeDriver.Options();
-  options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
-  const driver = new webDriver.Builder()
-    .forBrowser('chrome')
-    .setChromeOptions(options)
-    .build();
+function testPage({ logger }) {
+  /**
+   * runs axe-core tests for supplied testCase.  Returns the results of
+   * that test.
+   *
+   * @param {Object} testCase
+   * @param {string} testCase.url url of the testCase
+   * @param {Object} testCase.viewPort
+   * @param {string} testCase.viewPort.name name of this viewPort (e.g. mobile or
+   *  desktop)
+   * @param {number} testCase.viewPort.width
+   * @param {number} testCase.viewPort.height
+   */
+  return async (testCase) => {
+    logger.debug('Test case: ', testCase);
+    const { url, viewPort: { name, width, height }, viewPort } = testCase;
+    const options = new chromeDriver.Options();
+    options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
+    const driver = new webDriver.Builder()
+      .forBrowser('chrome')
+      .setChromeOptions(options)
+      .build();
 
-  const outputReport = await new Promise((resolve, reject) => {
-    logger.info(`Getting ${url}`);
-    driver.get(url).then(() => {
-      logger.info(`Testing ${url} ${name}`);
-      axeBuilder(driver)
-        .analyze((result, err) => {
-          if (err) {
-            reject(err);
-          }
-          logger.debug(`Results for ${url} ${name} received`);
-          resolve({ result, viewPort });
-          driver.close();
-        });
+    const report = await new Promise((resolve, reject) => {
+      logger.info(`Getting ${url}`);
+      driver.get(url).then(() => {
+        logger.info(`Testing ${url} ${name}`);
+        axeBuilder(driver)
+          .analyze((result, err) => {
+            if (err) {
+              reject(err);
+            }
+            logger.debug(`Results for ${url} ${name} received`);
+            resolve({ result, viewPort });
+            driver.close();
+          });
+      });
     });
-  });
-  return outputReport;
+    return report;
+  };
 }
 
 /**
@@ -118,24 +132,32 @@ async function testPage(testCase) {
 async function main() {
   // Read config
   const opts = crawlerOpts();
-  const domain = opts.domains.last();
+  const {
+    logger, check, viewPorts, random, domain,
+  } = opts;
+
 
   logger.debug('Crawling with options: \n', opts);
 
   // Create Queue of links on main page
-  const linkQueue = await crawl(domain, opts.depth, filterLinks(opts));
+  const linkQueue = await crawl(domain, opts, filterLinks(opts));
 
   logger.info(`Found ${linkQueue.size} links within ${domain}`);
   logger.debug('Queue to be tested: ', linkQueue);
-  const numToCheck = Math.min(isNatural(opts.check) ? opts.check : Infinity, linkQueue.size);
+  const numToCheck = Math.min(
+    isNatural(check) ? check : Infinity,
+    linkQueue.size,
+  );
   logger.info(`Based on options, testing ${numToCheck} urls`);
-  if (opts.random > 0 && opts.random < 1) {
-    logger.info(`Selecting random sample ${opts.random} of total`);
+
+  if (random > 0 && random < 1) {
+    logger.info(`Selecting random sample ${random} of total`);
   } else {
     opts.random = 1;
   }
+
   logger.debug(`Testing ${opts.viewPorts.length} views: `);
-  opts.viewPorts.forEach((viewPort) => {
+  viewPorts.forEach((viewPort) => {
     logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
   });
 
@@ -144,9 +166,9 @@ async function main() {
     .reduce(selectSampleSet(opts), [])
     .slice(0, numToCheck)
     .reduce(createURLViewSet(opts), [])
-    .map(testPage))
+    .map(testPage(opts)))
     .then(generateReportSaveFn(opts))
-    .catch(logger.error);
+    .catch(opts.logger.error);
 }
 
 polyfills();
