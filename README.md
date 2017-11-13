@@ -15,6 +15,8 @@ From npm:
 npm install -g axe-crawler
 ```
 
+Install [Google Chrome Driver](https://sites.google.com/a/chromium.org/chromedriver/) for your system and make sure the executable is on your environment's PATH.
+
 ## Basic Usage
 
 axe-crawler defaults to crawling through all links it can find WITHIN the provided doman name. If you use
