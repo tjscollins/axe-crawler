@@ -95,34 +95,39 @@ function testPage({ logger }) {
    * @param {number} testCase.viewPort.height
    */
   return async (testCase) => {
-    logger.debug('Test case: ', testCase);
-    const { url, viewPort: { name, width, height }, viewPort } = testCase;
-    const options = new chromeDriver.Options();
-    options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
-    const driver = new webDriver.Builder()
-      .forBrowser('chrome')
-      .setChromeOptions(options)
-      .build();
+    try {
+      logger.debug('Test case: ', testCase);
+      const { url, viewPort: { name, width, height }, viewPort } = testCase;
+      const options = new chromeDriver.Options();
+      options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
+      const driver = new webDriver.Builder()
+        .forBrowser('chrome')
+        .setChromeOptions(options)
+        .build();
 
-    const report = await new Promise((resolve, reject) => {
-      logger.info(`Getting ${url}`);
-      driver.get(url).then(() => {
-        logger.info(`Testing ${url} ${name}`);
-        axeBuilder(driver)
-          .analyze((result, err) => {
-            if (err) {
-              reject(err);
-            }
-            logger.debug(`Results for ${url} ${name} received`);
-            resolve({ result, viewPort });
-            driver.close();
-          });
+      const report = await new Promise((resolve, reject) => {
+        logger.info(`Getting ${url}`);
+        driver.get(url).then(() => {
+          logger.info(`Testing ${url} ${name}`);
+          axeBuilder(driver)
+            .analyze((result, err) => {
+              if (err) {
+                reject(err);
+              }
+              logger.debug(`Results for ${url} ${name} received`);
+              resolve({ result, viewPort });
+              driver.close();
+            });
+        });
       });
-    });
-    return report;
+      return report;
+    } catch (err) {
+      logger.error('Error encountered in using Selenium Webdriver: ');
+      logger.error(err);
+      process.exit(1);
+    }
   };
 }
-
 /**
  * main - main function to start scraping the website, build the queue of
  *  individual pages and run axe tests on each page
