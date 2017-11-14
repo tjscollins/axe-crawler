@@ -1,4 +1,4 @@
-import webDriver from 'selenium-webdriver';
+import webDriver, { logging } from 'selenium-webdriver';
 import chromeDriver from 'selenium-webdriver/chrome';
 import axeBuilder from 'axe-webdriverjs';
 
@@ -98,10 +98,15 @@ function testPage({ logger, verbose }) {
     try {
       logger.debug('Test case: ', testCase);
       const { url, viewPort: { name, width, height }, viewPort } = testCase;
+
+      const chromeLoggingPrefs = new webDriver.logging.Preferences();
+      chromeLoggingPrefs.setLevel(webDriver.logging.Type.BROWSER, webDriver.logging.Level.OFF);
+      chromeLoggingPrefs.setLevel(webDriver.logging.Type.CLIENT, webDriver.logging.Level.OFF);
+
       const options = new chromeDriver.Options();
-      const chromeLoggingOpts = { browser: 'OFF' };
-      options.setLoggingPrefs(chromeLoggingOpts);
+      options.setLoggingPrefs(chromeLoggingPrefs);
       options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
+
       const driver = new webDriver.Builder()
         .forBrowser('chrome')
         .setChromeOptions(options)
