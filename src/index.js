@@ -81,7 +81,7 @@ function createURLViewSet(opts) {
  * @param {any} { logger }
  * @returns
  */
-function testPage({ logger }) {
+function testPage({ logger, verbose }) {
   /**
    * runs axe-core tests for supplied testCase.  Returns the results of
    * that test.
@@ -99,6 +99,8 @@ function testPage({ logger }) {
       logger.debug('Test case: ', testCase);
       const { url, viewPort: { name, width, height }, viewPort } = testCase;
       const options = new chromeDriver.Options();
+      const chromeLoggingOpts = { browser: 'OFF' };
+      options.setLoggingPrefs(chromeLoggingOpts);
       options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
       const driver = new webDriver.Builder()
         .forBrowser('chrome')
