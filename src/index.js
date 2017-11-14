@@ -104,10 +104,11 @@ function testPage({ logger, verbose }) {
       chromeLoggingPrefs.setLevel(webDriver.logging.Type.CLIENT, webDriver.logging.Level.OFF);
 
       const options = new chromeDriver.Options();
-      options.setLoggingPrefs(chromeLoggingPrefs);
+      // options.setLoggingPrefs(chromeLoggingPrefs);
       options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
 
       const driver = new webDriver.Builder()
+        .setLoggingPrefs(chromeLoggingPrefs)
         .forBrowser('chrome')
         .setChromeOptions(options)
         .build();
