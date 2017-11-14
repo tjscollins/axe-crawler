@@ -97,33 +97,39 @@ export default async function crawl(domain, { depth = 5, logger }, filterFn) {
     return new Set([url]);
   }
 
-  // Scrape main url
-  const mainPage = await axios.get(url).catch(logger.error);
-  logger.debug('Crawling for links at DEPTH 0');
-  const allLinks = await queueLinks(domain, mainPage, filterFn);
-  let links = new Set([...allLinks]);
+  try {
+    // Scrape main url
+    logger.debug(`Crawling ${url}`);
+    const mainPage = await axios.get(url).catch(err => logger.error(err));
+    logger.debug('Crawling for links at DEPTH 0');
+    const allLinks = await queueLinks(domain, mainPage, filterFn);
+    let links = new Set([...allLinks]);
 
-  for (let i = 1; i < depth; i += 1) {
-    logger.debug(`Crawling for links at DEPTH ${i}`);
-    const promisedLinks = [...links]
-      .map(axios.get)
-      .map(request => request.catch(err => err));
-    const linkedContent = await Promise.all(promisedLinks);
+    for (let i = 1; i < depth; i += 1) {
+      logger.debug(`Crawling for links at DEPTH ${i}`);
+      const promisedLinks = [...links]
+        .map(axios.get)
+        .map(request => request.catch(err => err));
+      const linkedContent = await Promise.all(promisedLinks);
 
-    links = linkedContent
-      .filter(content => !(content instanceof Error))
-      .map(newPage => queueLinks(domain, newPage, filterFn))
-      .reduce(combineLinkSets, new Set())
-      .difference(allLinks);
+      links = linkedContent
+        .filter(content => !(content instanceof Error))
+        .map(newPage => queueLinks(domain, newPage, filterFn))
+        .reduce(combineLinkSets, new Set())
+        .difference(allLinks);
 
-    if (links.size === 0) {
-      i = depth;
+      if (links.size === 0) {
+        i = depth;
+      }
+
+      for (const address of links) {
+        allLinks.add(address);
+      }
     }
-
-    for (const address of links) {
-      allLinks.add(address);
-    }
+    return allLinks;
+  } catch (err) {
+    logger.error('Error crawling for links: ', err);
+    process.exit(1);
   }
-  return allLinks;
 }
 

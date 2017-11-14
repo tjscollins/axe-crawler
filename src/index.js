@@ -181,7 +181,7 @@ async function main() {
     .reduce(createURLViewSet(opts), [])
     .map(testPage(opts)))
     .then(generateReportSaveFn(opts))
-    .catch(opts.logger.error);
+    .catch(err => opts.logger.error(err));
 }
 
 polyfills();
