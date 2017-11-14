@@ -18,7 +18,7 @@ export function outputToJSON(file, reports, { domain }) {
     reports,
   };
   const formattedJSON = JSON.stringify(fullReport, null, 2);
-  fs.writeFile(file, formattedJSON);
+  fs.writeFileSync(file, formattedJSON);
 }
 
 function countResults(report, type) {
@@ -166,5 +166,5 @@ export function outputToHTML(file, reports, opts) {
 
   const foot = '</body><script></script></html>';
 
-  fs.writeFile(file, head + body + foot);
+  fs.writeFileSync(file, head + body + foot);
 }
