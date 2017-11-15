@@ -17,6 +17,8 @@ npm install -g axe-crawler
 
 Install [Google Chrome Driver](https://sites.google.com/a/chromium.org/chromedriver/) for your system and make sure the executable is on your environment's PATH.
 
+*Note:* On Windows, Selenium passes the browser logs to the node console.  These are not caused by axe-crawler, and reflect events happening in the browser as it loads pages.  Configuration for this logging is a planned feature, but for now there is no way to suppress these messages.
+
 ## Basic Usage
 
 axe-crawler defaults to crawling through all links it can find WITHIN the provided doman name. If you use
@@ -79,7 +81,7 @@ Command line arguments passed to axe-crawler override config file settings and t
     Specify which viewPorts to use when running accessibility tests.  Useful for
     sites where visibile markup on mobile screen sizes differs substantially from
     other screen sizes.  Format is name:WIDTHxHEIGHT,... Default: mobile:360x640,
-    table_vertical:768x1024,table_horizontal:1024x768,desktop:1440x900
+    tablet_vertical:768x1024,tablet_horizontal:1024x768,desktop:1440x900
 
 --output outputFilePrefix
     Specify the prefix for your output file names which will be
@@ -142,3 +144,4 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
 ## Planned Features
 
 * Oauth functionality for testing pages behind logins
+* Configure Selenium logging via axe-crawler configuration
