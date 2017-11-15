@@ -7,7 +7,7 @@ jest.mock('fs');
 polyfills();
 
 beforeEach(() => {
-  fs.writeFile.mockReset();
+  fs.writeFileSync.mockReset();
 });
 
 describe('outputToJSON', () => {
@@ -21,8 +21,8 @@ describe('outputToJSON', () => {
 
     outputToJSON('json-file', testObject, opts);
 
-    expect(fs.writeFile.mock.calls.length).toBe(1);
-    expect(fs.writeFile.mock.calls[0][0]).toBe('json-file');
+    expect(fs.writeFileSync.mock.calls.length).toBe(1);
+    expect(fs.writeFileSync.mock.calls[0][0]).toBe('json-file');
   });
 });
 
@@ -35,10 +35,10 @@ describe('outputToHTML', () => {
 
       outputToHTML('html-output', reports, { random: false, domains: ['test'] });
 
-      expect(fs.writeFile.mock.calls.length).toBe(1);
-      expect(fs.writeFile.mock.calls[0][0]).toBe('html-output');
-      expect(typeof fs.writeFile.mock.calls[0][1]).toBe('string');
-      expect(isHTML(fs.writeFile.mock.calls[0][1])).toBe(true);
+      expect(fs.writeFileSync.mock.calls.length).toBe(1);
+      expect(fs.writeFileSync.mock.calls[0][0]).toBe('html-output');
+      expect(typeof fs.writeFileSync.mock.calls[0][1]).toBe('string');
+      expect(isHTML(fs.writeFileSync.mock.calls[0][1])).toBe(true);
       done();
     });
   });
