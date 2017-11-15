@@ -1,12 +1,12 @@
 # axe-crawler
 
-![npm 6.11.1](https://img.shields.io/badge/npm-6.11.1-blue.svg?style=flat-square) ![license MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+![npm 8.9.1](https://img.shields.io/badge/npm-8.9.1-blue.svg?style=flat-square) ![license MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
 
 axe-crawler is a Node.js webcrawler which tests every page it can find in a single domain using the [axe-core](https://github.com/dequelabs/axe-core) accessibility testing library.
 
 axe-crawler produces a detailed html summary report of the accessibility issues it finds on pages in the domain in addition to raw JSON data output from the tests.
 
-***WARNING: Depending on the number of tests run (urls x viewPorts) the raw JSON data output can be quite large, easily in the tens of megabytes.  Use the --check, --random, and --viewPort options to control which pages are tested.***
+**WARNING:** Depending on the number of tests run (urls x viewPorts) the raw JSON data output can be quite large, easily in the tens of megabytes.  Use the --check, --random, and --viewPort options to control which pages are tested.
 
 ## Installation
 
@@ -33,7 +33,7 @@ When axe-crawler finishes crawling through the domain to the specified depth (de
 
 Each url found will be visited a total of once + the number of viewPorts specified (default: 5 times total).  In order to avoid overloading servers the selenium driven requests are done synchronously rather than asynchronously.
 
-***Please be considerate in your use of this or any web scraping tool.  Don't point it at other people's domains without permission.  It is recommended to use this tool on testing/staging servers rather than production servers for obvious reasons.***
+*Please be considerate in your use of this or any web scraping tool.  Don't point it at other people's domains without permission.  It is recommended to use this tool on testing/staging servers rather than production servers for obvious reasons.*
 
 ## Configuration
 
