@@ -7,6 +7,7 @@ import polyfills from './polyfills';
 import { outputToHTML, outputToJSON } from './output';
 import crawl from './crawler';
 import crawlerOpts from './config';
+import db from './db';
 
 /**
  * returns curried function with access to logger
@@ -81,7 +82,7 @@ function createURLViewSet(opts) {
  * @param {any} { logger }
  * @returns
  */
-function testPage({ logger, verbose }) {
+function testPage({ logger, verbose, sql }) {
   /**
    * runs axe-core tests for supplied testCase.  Returns the results of
    * that test.
@@ -123,7 +124,11 @@ function testPage({ logger, verbose }) {
                 reject(err);
               }
               logger.debug(`Results for ${url} ${name} received`);
-              resolve({ result, viewPort });
+              if (sql) {
+                resolve(db);
+              } else {
+                resolve({ result, viewPort });
+              }
               driver.close();
             });
         });
