@@ -171,11 +171,11 @@ async function main() {
 
   const viewsToTest = opts.random * numToCheck * viewPorts.length;
   if (viewsToTest > 100) {
-    logger.info('Over 100 views to test, switching to SQLite mode to store results');
+    logger.info('Over 100 page views to test, switching to SQLite mode to store results');
     opts.sql = true;
   }
 
-  logger.debug(`Testing ${opts.viewPorts.length} views: `);
+  logger.debug(`Testing ${opts.viewPorts.length} viewPorts: `);
   viewPorts.forEach((viewPort) => {
     logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
   });
