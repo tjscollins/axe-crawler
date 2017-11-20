@@ -34,9 +34,12 @@
     "axios": "^0.16.2",
     "cheerio": "^1.0.0-rc.2",
     "escape-html": "^1.0.3",
+    "knex": "^0.14.1",
     "marked": "^0.3.6",
     "minimist": "^1.2.0",
+    "objection": "^0.9.1",
     "selenium-webdriver": "^3.5.0",
+    "sqlite3": "^3.1.13",
     "validator": "^8.2.0"
   },
   "devDependencies": {

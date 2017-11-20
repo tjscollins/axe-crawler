@@ -1,12 +1,15 @@
 // rollup.config.js
 import babel from 'rollup-plugin-babel';
 import uglify from 'rollup-plugin-uglify';
-import { minify } from 'uglify-es';
+import {
+  minify,
+} from 'uglify-es';
 
 export default {
   // core input options
   input: 'src/index.js', // required
-  // external,
+  external: ['fs', 'selenium-webdriver', 'axe-webdriverjs', 'validator',
+    'marked', 'escape-html', 'axios', 'cheerio', 'path', 'knex', 'objection'],
   plugins: [
     babel(),
     uglify({}, minify),
