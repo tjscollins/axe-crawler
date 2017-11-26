@@ -26,7 +26,7 @@ export default class HTMLReporter {
   async open(filename = 'report.html') {
     fs.writeFileSync(filename, '');
     this[FILE_NAME] = fs.openSync(filename, 'w');
-    this[WRITE_TO_FILE] = fs.writeSync(filename, string);
+    this[WRITE_TO_FILE] = string => fs.writeSync(this[FILE_NAME], string);
   }
 
   async write(views) {
@@ -54,10 +54,11 @@ function initHTML() {
   }
 }
 
-function testResultList(report, type) {
+function testResultList(reports, type) {
   const resultList = new Set();
-  Object.entries(report[type]).forEach(([view, tests]) => {
-    tests.forEach(({ description }) => {
+  reports[type].forEach(({ viewPort, report }) => {
+    const reportObject = JSON.parse(report);
+    reportObject.forEach(({ description }) => {
       resultList.add(`* ${escape(description)}\n`);
     });
   });
@@ -69,13 +70,13 @@ async function writeSummaryTable(testedURLs) {
   const writeToFile = this[WRITE_TO_FILE];
 
   writeToFile(marked('## Summary of Overall Test Results'));
-  writeToFile('<table class="summary-table"><thead><tr><th scope="col">URL</th><th scope="col">Failing Tests</th><th scope="col">Passing Tests</th></thead><tbody>');
+  writeToFile('<table class="summary-table"><thead><tr><th scope="col">URL</th><th scope="col">Failing Tests</th><th scope="col">Passing Tests</th></tr></thead><tbody>');
 
   await Promise.all(testedURLs.map(async ({ url }) => {
     const reports = await this[OPTIONS].db.read('summary', { url });
-    reports.violations.forEach(({ report, viewPort }) => {
-      writeToFile(`<tr><th scope="row">${url} ${viewPort}</th><td>${escape(report)}</td><td></td></tr>`);
-    });
+    await writeToFile(`<tr><th scope="row">${url}</th>`);
+    await writeToFile(`<td>${testResultList(reports, 'violations')}</td>`);
+    await writeToFile(`<td>${testResultList(reports, 'passes')}</td></tr>`);
   }));
 
   writeToFile('</tbody></table>');
