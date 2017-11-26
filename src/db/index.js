@@ -1,7 +1,4 @@
-import path from 'path';
 import Knex from 'knex';
-import objection from 'objection';
-
 import queries from './queries.js';
 
 /* ---Symbols For Private Variables--- */
@@ -30,7 +27,7 @@ export default class DatabaseConnectionManager {
         this._db = Knex({
           client: 'sqlite3',
           connection: {
-            filename: './axe-crawler.sqlite',
+            filename: 'axe-crawler.db',
           },
         });
         break;

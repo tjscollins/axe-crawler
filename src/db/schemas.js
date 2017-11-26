@@ -8,7 +8,8 @@ const SCHEMA = Symbol('Data Schema');
 class ViewPort extends Model {}
 
 export class ViolationsReport extends Model {
-  static createTable(connection) {
+  static async createTable(connection) {
+    await connection.schema.dropTableIfExists('violations');
     return connection.schema.createTableIfNotExists('violations', (table) => {
       table.increments('id').primary();
       table.string('url');
@@ -25,10 +26,11 @@ export class ViolationsReport extends Model {
 class PassesReport extends Model {}
 
 export class AxeResult extends Model {
-  static createTable(connection) {
+  static async createTable(connection) {
+    await connection.schema.dropTableIfExists('axe_results');
     return connection.schema.createTableIfNotExists('axe_results', (table) => {
       table.increments('id').primary();
-      table.string('url');
+      table.string('url').unique();
     });
   }
 

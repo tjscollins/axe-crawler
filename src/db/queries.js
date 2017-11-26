@@ -45,6 +45,18 @@ export default async function queries(knex) {
         .then(res => log.debug(`Result received: ${JSON.stringify(res)}`))
         .catch(err => log.error(`Error reading from DB: ${err}`));
     },
+    tested_pages: () => {
+      log.debug('Fetching test results');
+      return AxeResult
+        .query();
+    },
+    violations_summary: ({ url }) => ViolationsReport
+      .query()
+      .where('url', url),
+    summary: async ({ url }) => {
+      const violations = await ViolationsReport.query().where('url', url);
+      return { violations };
+    },
   };
 
   const update = {};
