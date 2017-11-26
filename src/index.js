@@ -186,7 +186,7 @@ async function main() {
     logger.info('Over 100 page views to test, switching to SQLite mode to store results');
     opts.sql = true;
     opts.db = new DB({ type: 'file' });
-    opts.db.initialize();
+    await opts.db.initialize();
   }
 
   logger.debug(`Testing ${opts.viewPorts.length} viewPorts: `);
