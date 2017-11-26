@@ -109,3 +109,19 @@ export function isNatural(num) {
   if (num < 0) return false;
   return Number.isInteger(num);
 }
+
+/**
+ * Generates a callback function for used to reduce list of urls into
+ * list of {url, viewPort} combinations
+ *
+ * @param {Object} globalOptions
+ * @returns {Function} callback function for reduce
+ */
+export function createURLViewSet(opts) {
+  return (links, url) => {
+    opts.viewPorts.forEach((viewPort) => {
+      links.push({ url, viewPort });
+    });
+    return links;
+  };
+}
