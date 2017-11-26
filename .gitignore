@@ -6,3 +6,4 @@ coverage/
 npm-debug.log
 *.json
 *.html
+axe-crawler.db

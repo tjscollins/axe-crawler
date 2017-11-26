@@ -8,6 +8,7 @@ module.exports = {
     "rules": {
         "no-restricted-syntax": "off",
         "no-await-in-loop": "off",
-        "no-underscore-dangle": "off"
+        "no-underscore-dangle": "off",
+        "no-use-before-define": "off",
     }
 };
