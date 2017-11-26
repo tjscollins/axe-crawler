@@ -7,7 +7,8 @@ import polyfills from './polyfills';
 import { outputToHTML, outputToJSON } from './output';
 import crawl from './crawler';
 import crawlerOpts from './config';
-import db from './db';
+import DB from './db/index';
+import TestRunner from './TestRunner';
 
 /**
  * returns curried function with access to logger
@@ -52,12 +53,22 @@ function resultsToReports({ logger }) {
  * @returns {Function} callback function to print results of axe-core tests.
  */
 function generateReportSaveFn(opts) {
-  const { output, logger } = opts;
-  return (results) => {
+  const { output, logger, sql } = opts;
+  return async (results) => {
     logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
     const reports = results.reduce(resultsToReports(opts), {});
-    outputToJSON(`${output}.json`, reports, opts);
-    outputToHTML(`${output}.html`, reports, opts);
+    if (sql) {
+      await Promise.all(Object.keys(reports).map(async (url) => {
+        await opts.db.create('axe_result', {
+          url,
+          violations: JSON.stringify(reports[url].violations),
+          viewPort: 'test viewPort',
+        });
+      }));
+    } else {
+      outputToJSON(`${output}.json`, reports, opts);
+      outputToHTML(`${output}.html`, reports, opts);
+    }
   };
 }
 
@@ -124,11 +135,7 @@ function testPage({ logger, verbose, sql }) {
                 reject(err);
               }
               logger.debug(`Results for ${url} ${name} received`);
-              if (sql) {
-                resolve(db);
-              } else {
-                resolve({ result, viewPort });
-              }
+              resolve({ result, viewPort });
               driver.close();
             });
         });
@@ -175,9 +182,11 @@ async function main() {
   }
 
   const viewsToTest = opts.random * numToCheck * viewPorts.length;
-  if (viewsToTest > 100) {
+  if (viewsToTest < 100) {
     logger.info('Over 100 page views to test, switching to SQLite mode to store results');
     opts.sql = true;
+    opts.db = new DB({ type: 'file' });
+    opts.db.initialize();
   }
 
   logger.debug(`Testing ${opts.viewPorts.length} viewPorts: `);
@@ -186,13 +195,24 @@ async function main() {
   });
 
   // Test each link
-  Promise.all([...linkQueue]
-    .reduce(selectSampleSet(opts), [])
-    .slice(0, numToCheck)
-    .reduce(createURLViewSet(opts), [])
-    .map(testPage(opts)))
-    .then(generateReportSaveFn(opts))
-    .catch(err => opts.logger.error(err));
+  // Promise.all([...linkQueue]
+  //   .reduce(selectSampleSet(opts), [])
+  //   .slice(0, numToCheck)
+  //   .reduce(createURLViewSet(opts), [])
+  //   .map(testPage(opts)))
+  //   .then(generateReportSaveFn(opts))
+  //   .then(() => opts.db.read('axe_result', { url: 'http://cnmipss.org', viewPort: 'desktop' }))
+  //   .catch(err => opts.logger.error(err));
+
+  try {
+    const runner = new TestRunner(opts);
+    await runner.queue(linkQueue);
+    await runner.run();
+    await runner.report();
+  } catch (err) {
+    logger.error(err);
+    process.exit(1);
+  }
 }
 
 polyfills();
