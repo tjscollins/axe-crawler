@@ -5,14 +5,14 @@ import escape from 'escape-html';
 /* --- Symbols for Private Members --- */
 
 /**
- * Values
+ * Private Values
  */
 const OPTIONS = Symbol('Options');
 const FILE_NAME = Symbol('Filename');
 const CSS_STYLES = '<style> h1 { text-align: center; } ol > li { padding-bottom: 15px; font-weight: 500 } ul > li { font-weight: 400; font-size: 12px; } ol > li > span { font-weight: 400; } thead th { text-align: center; } tr { border: 1px solid lightsalmon; } tbody th, tbody td { padding: 5px; text-align: left; vertical-align: text-top; font-weight: normal; } table.summary-table { width: 100%; }</style>';
 
 /**
- * Methods
+ * Private Methods
  */
 const INIT_HTML = Symbol('Prepare HTML File');
 const WRITE_TO_FILE = Symbol('Append an html string to the report file');
@@ -32,7 +32,7 @@ export default class HTMLReporter {
   async write(views) {
     await initHTML.call(this);
     await writeSummaryTable.call(this, views);
-    // writeDetails.call(this, data);
+    await writeCompleteResults.call(this, views);
   }
 
   async close() {
@@ -88,4 +88,83 @@ function closeHTML() {
   writeToFile('</body><script></script></html>');
 
   fs.closeSync(this[FILE_NAME]);
+}
+
+function countResults(violations) {
+  return violations.reduce((sum, { viewPort, url, report }) => {
+    const result = JSON.parse(report);
+    return sum + result.length;
+  }, 0);
+}
+
+function writeNodeMessages(list, {
+  html, any, all, none,
+}) {
+  /* eslint-disable no-param-reassign */
+  list += `<li>${escape(html)}`;
+  any.forEach(({ message }) => {
+    list += `<br />${escape(message)}`;
+  });
+  all.forEach(({ message }) => {
+    list += `<br />${escape(message)}`;
+  });
+  none.forEach(({ message }) => {
+    list += `<br />${escape(message)}`;
+  });
+  list += '</li>';
+  return list;
+  /* eslint-enable no-param-reassign */
+}
+
+async function writeCompleteResults(testedURLs) {
+  const writeToFile = this[WRITE_TO_FILE];
+  writeToFile('<div class="row"><div class="col-xs-12">');
+  writeToFile(`${marked('## Detailed List of Failing Tests')}</div></div>`);
+
+  await Promise.all(testedURLs.map(async ({ url }) => {
+    const violations = await this[OPTIONS].db.read('violations_summary', { url });
+    const violationCount = countResults(violations);
+    writeToFile(marked(`### ${escape(url)} ${violationCount} violations`));
+    writeToFile('<br/>');
+    await Promise.all(violations.map(({ viewPort, url, report }) => {
+      const results = JSON.parse(report);
+      if (results.length > 0) {
+        writeToFile(`<h4>${viewPort.toUpperCase()}</h4><br/><ol>${results.reduce((item, {
+          description,
+          nodes,
+          impact,
+        }) => {
+          item += `<li>${impact ? `${impact.toUpperCase()}: ` : ''}${escape(description)}<br />`;
+          item += '<span>Affected Nodes: </span><ul>';
+          item += nodes.reduce(writeNodeMessages, '');
+          item += '</ul></li>';
+          return item;
+        }, '')}`);
+      }
+    }));
+  }));
+
+  writeToFile(marked('## Detailed List of Passing Tests'));
+  await Promise.all(testedURLs.map(async ({ url }) => {
+    const passes = await this[OPTIONS].db.read('passes_summary', { url });
+    const passCount = countResults(passes);
+    writeToFile(marked(`### ${escape(url)} ${passCount} passing tests`));
+    writeToFile('<br/>');
+    await Promise.all(passes.map(({ viewPort, url, report }) => {
+      const results = JSON.parse(report);
+      if (results.length > 0) {
+        writeToFile(`<h4>${viewPort.toUpperCase()}</h4><br/><ol>${results.reduce((item, {
+          description,
+          nodes,
+          impact,
+        }) => {
+          item += `<li>${impact ? `${impact.toUpperCase()}: ` : ''}${escape(description)}<br />`;
+          item += '<span>Affected Nodes: </span><ul>';
+          item += nodes.reduce(writeNodeMessages, '');
+          item += '</ul></li>';
+          return item;
+        }, '')}`);
+      }
+    }));
+  }));
 }
