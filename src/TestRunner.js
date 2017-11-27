@@ -3,8 +3,8 @@ import chromeDriver from 'selenium-webdriver/chrome';
 import axeBuilder from 'axe-webdriverjs';
 
 import { isNatural, selectSampleSet, createURLViewSet } from './util';
-import { outputToHTML, CSS_STYLES } from './output';
 import HTMLReporter from './reporters/HtmlReporter';
+import JSONReporter from './reporters/JSONReporter';
 
 /* --- Symbols for Private Members --- */
 
@@ -24,7 +24,7 @@ const CREATE_TEST_VIEWS = Symbol('Create a list of views to test');
 
 export default class TestRunner {
   constructor(opts) {
-    this[OPTIONS] = Object.assign({}, opts);
+    this[OPTIONS] = opts;
     this[TEST_PAGE] = testPage.bind(this);
     this[SAMPLE] = selectSampleSet(this[OPTIONS]);
     this[CREATE_TEST_VIEWS] = createURLViewSet(this[OPTIONS]);
@@ -58,18 +58,20 @@ export default class TestRunner {
   }
 
   async report() {
-    // this[OPTIONS].db.read('axe_result', { url: 'http://cnmipss.org', viewPort: 'desktop' });
+    const { logger, db } = this[OPTIONS];
+    const testedPages = await db.read('tested_pages');
 
-    const views = await this[OPTIONS].db.read('tested_pages');
+    logger.info('Saving JSON report');
+    const json = new JSONReporter(this[OPTIONS]);
+    await json.open();
+    await json.write(testedPages);
+    await json.close();
 
-    // Output Results to JSON
-
-    // Output Results to HTML
+    logger.info('Saving HTML Report');
     const html = new HTMLReporter(this[OPTIONS]);
     await html.open();
-    await html.write(views);
-    this[OPTIONS].logger.debug('Closing HTMLReporter');
-    html.close();
+    await html.write(testedPages);
+    await html.close();
   }
 }
 
