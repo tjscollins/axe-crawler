@@ -21,6 +21,7 @@ export default class DatabaseConnectionManager {
           connection: {
             filename: ':memory:',
           },
+          useNullAsDefault: true,
         });
         break;
       case 'file':
@@ -29,6 +30,7 @@ export default class DatabaseConnectionManager {
           connection: {
             filename: 'axe-crawler.db',
           },
+          useNullAsDefault: true,
         });
         break;
       default:
