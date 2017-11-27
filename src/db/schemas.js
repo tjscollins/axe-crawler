@@ -23,7 +23,21 @@ export class ViolationsReport extends Model {
   }
 }
 
-class PassesReport extends Model {}
+export class PassesReport extends Model {
+  static async createTable(connection) {
+    await connection.schema.dropTableIfExists('passes');
+    return connection.schema.createTableIfNotExists('passes', (table) => {
+      table.increments('id').primary();
+      table.string('url');
+      table.string('viewPort');
+      table.string('report');
+    });
+  }
+
+  static get tableName() {
+    return 'passes';
+  }
+}
 
 export class AxeResult extends Model {
   static async createTable(connection) {
@@ -45,6 +59,14 @@ export class AxeResult extends Model {
         modelClass: ViolationsReport,
         join: {
           from: 'violations.url',
+          to: 'axe_results.url',
+        },
+      },
+      passes: {
+        relation: Model.HasManyRelation,
+        modelClass: PassesReport,
+        join: {
+          from: 'passes.url',
           to: 'axe_results.url',
         },
       },
