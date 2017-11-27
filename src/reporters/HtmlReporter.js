@@ -4,24 +4,30 @@ import escape from 'escape-html';
 
 /* --- Symbols for Private Members --- */
 
-/**
- * Private Value Symbols
- */
+// Private Values
 const OPTIONS = Symbol('Options');
 const FILE_NAME = Symbol('Filename');
 const STYLE_SHEETS = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.8.0/github-markdown.css"><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">';
 const CSS_STYLES = '<style> h1 { text-align: center; } ol > li { padding-bottom: 15px; font-weight: 500 } ul > li { font-weight: 400; font-size: 12px; } ol > li > span { font-weight: 400; } thead th { text-align: center; } tr { border: 1px solid lightsalmon; } tbody th, tbody td { padding: 5px; text-align: left; vertical-align: text-top; font-weight: normal; } table.summary-table { width: 100%; }</style>';
 
-/**
- * Private Method Symbols
- */
+// Private Methods
 const INIT_HTML = Symbol('Prepare HTML File');
 const WRITE_TO_FILE = Symbol('Append an html string to the report file');
+const WRITE_SUMMARY_TABLE = Symbol('Write html summary table');
+const WRITE_COMPLETE_RESULTS = Symbol('Write complete test results to html');
+const CLOSE_HTML = Symbol('Append closing tags and close html file');
 
+/* --- Class Declaration and Public Method Implementations --- */
 export default class HTMLReporter {
   constructor(opts) {
-    this[OPTIONS] = Object.assign({}, opts);
+    // Values
+    this[OPTIONS] = opts;
+
+    // Methods
     this[INIT_HTML] = initHTML.bind(this);
+    this[WRITE_SUMMARY_TABLE] = writeSummaryTable.bind(this);
+    this[WRITE_COMPLETE_RESULTS] = writeCompleteResults.bind(this);
+    this[CLOSE_HTML] = closeHTML.bind(this);
   }
 
   async open(filename = 'report.html') {
@@ -31,20 +37,18 @@ export default class HTMLReporter {
   }
 
   async write(views) {
-    await initHTML.call(this);
-    await writeSummaryTable.call(this, views);
-    await writeCompleteResults.call(this, views);
+    await this[INIT_HTML]();
+    await this[WRITE_SUMMARY_TABLE](views);
+    await this[WRITE_COMPLETE_RESULTS](views);
   }
 
   async close() {
-    closeHTML.call(this);
+    this[CLOSE_HTML]();
   }
 }
 
 
-/**
- * Private Method Implementations
- */
+/* --- Private Method Implementations --- */
 function initHTML() {
   const writeToFile = this[WRITE_TO_FILE];
 
