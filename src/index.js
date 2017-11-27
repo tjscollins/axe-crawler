@@ -1,8 +1,8 @@
 import { filterLinks, isNatural } from './util';
 import polyfills from './polyfills';
 import crawl from './crawler';
-import crawlerOpts from './config';
 import DB from './db/index';
+import AxeCrawlerConfiguration from './AxeCrawlerConfiguration';
 import TestRunner from './TestRunner';
 
 // Number of page views at which to switch from in-memory DB to filesystem DB
@@ -15,14 +15,11 @@ const USE_FILE_DB = 50;
  * @param {string} url homepage of website to be scraped and tested.
  */
 async function main() {
-  // Read config
-  const opts = crawlerOpts();
+  const opts = new AxeCrawlerConfiguration();
   const {
     logger, check, viewPorts, random, domain,
   } = opts;
 
-
-  logger.debug('Crawling with options: \n', opts);
 
   // Create Queue of links on main page
   const linkQueue = await crawl(domain, opts, filterLinks(opts));
@@ -34,11 +31,8 @@ async function main() {
     linkQueue.size,
   );
   logger.info(`Based on options, testing ${numToCheck} urls`);
-
   if (random > 0 && random < 1) {
     logger.info(`Selecting random sample: ${random} of ${numToCheck} urls`);
-  } else {
-    opts.random = 1;
   }
 
   const viewsToTest = opts.random * numToCheck * viewPorts.length;
