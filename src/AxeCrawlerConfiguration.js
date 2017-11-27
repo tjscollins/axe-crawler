@@ -1,7 +1,9 @@
 import fs from 'fs';
 import minimist from 'minimist';
 
+import DB from './db/index';
 import Logger from './logger';
+import { isNatural } from './util';
 
 /* --- Constants --- */
 const DEFAULT_CONFIG_FILE = './.axe-crawler.json';
@@ -36,6 +38,7 @@ const DEFAULT_OPTS = {
     },
   ],
   verbose: 'error',
+  useFileOver: 50, // Use file-system DB if total page views exceed this value
 };
 
 /* --- Symbols for Private Values and Methods --- */
@@ -60,6 +63,29 @@ export default class AxeCrawlerConfiguration {
     checkValues.call(this);
 
     this.logger.debug('Crawling with options: \n', this);
+  }
+
+  setNumberToCheck(queue) {
+    const { check } = this;
+    this.numToCheck = Math.min(
+      isNatural(check) ? check : Infinity,
+      queue.size,
+    );
+  }
+
+  async configureDB() {
+    const {
+      random, viewPorts, numToCheck, useFileOver, logger,
+    } = this;
+    const viewsToTest = random * numToCheck * viewPorts.length;
+    if (viewsToTest > useFileOver) {
+      logger.info(`Over ${useFileOver} page views to test, switching to SQLite file mode to store results`);
+      this.db = new DB({ type: 'file' });
+    } else {
+      logger.debug(`Fewer than ${useFileOver} page views, using in-memory SQLite to store results`);
+      this.db = new DB({ type: 'memory' });
+    }
+    await this.db.initialize();
   }
 }
 
