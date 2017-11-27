@@ -22,7 +22,13 @@ export default async function queries(knex) {
     }) => Promise.all([
       AxeResult
         .query()
-        .insert({ url }),
+        .insert({ url })
+        .catch((err) => {
+          // Drop and ignore duplicate urls, otherwise throw error
+          if (!err.message.match('SQLITE_CONSTRAINT: UNIQUE')) {
+            throw err;
+          }
+        }),
       ViolationsReport
         .query()
         .insert({ url, viewPort, report: violations }),
@@ -30,7 +36,7 @@ export default async function queries(knex) {
         .query()
         .insert({ url, viewPort, report: passes }),
     ]).catch((err) => {
-      log.error(`at queries.js:33\n${err}`);
+      log.error(err);
     }),
   };
 
