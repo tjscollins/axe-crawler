@@ -7,6 +7,7 @@ import escape from 'escape-html';
 // Private Values
 const OPTIONS = Symbol('Options');
 const FILE_NAME = Symbol('Filename');
+const TOTALS = Symbol('Total count of passing and failing tests');
 const STYLE_SHEETS = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.8.0/github-markdown.css"><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">';
 const CSS_STYLES = '<style> h1 { text-align: center; } ol > li { padding-bottom: 15px; font-weight: 500 } ul > li { font-weight: 400; font-size: 12px; } ol > li > span { font-weight: 400; } thead th { text-align: center; } tr { border: 1px solid lightsalmon; } tbody th, tbody td { padding: 5px; text-align: left; vertical-align: text-top; font-weight: normal; } table.summary-table { width: 100%; }</style>';
 
@@ -22,6 +23,7 @@ export default class HTMLReporter {
   constructor(opts) {
     // Values
     this[OPTIONS] = opts;
+    this[TOTALS] = { passes: 0, violations: 0 };
 
     // Methods
     this[INIT_HTML] = initHTML.bind(this);
@@ -67,6 +69,7 @@ function testResultList(reports, type) {
   reports[type].forEach(({ viewPort, report }) => {
     const reportObject = JSON.parse(report);
     reportObject.forEach(({ description }) => {
+      this[TOTALS][type] += 1;
       resultList.add(`* ${escape(description)}\n`);
     });
   });
@@ -83,8 +86,8 @@ async function writeSummaryTable(testedURLs) {
   await Promise.all(testedURLs.map(async ({ url }) => {
     const reports = await this[OPTIONS].db.read('summary', { url });
     await writeToFile(`<tr><th scope="row">${url}</th>`);
-    await writeToFile(`<td>${testResultList(reports, 'violations')}</td>`);
-    await writeToFile(`<td>${testResultList(reports, 'passes')}</td></tr>`);
+    await writeToFile(`<td>${testResultList.call(this, reports, 'violations')}</td>`);
+    await writeToFile(`<td>${testResultList.call(this, reports, 'passes')}</td></tr>`);
   }));
 
   writeToFile('</tbody></table>');
@@ -159,7 +162,7 @@ function printResultsList({ viewPort, url, report }) {
 async function writeCompleteResults(testedURLs) {
   const writeToFile = this[WRITE_TO_FILE];
 
-  writeToFile(`${marked('## Detailed List of Failing Tests')}`);
+  writeToFile(marked(`## Detailed List of Failing Tests: ${this[TOTALS].violations} failing tests`));
   await Promise.all(testedURLs.map(async ({ url }) => {
     const violations = await this[OPTIONS].db.read('violations_summary', { url });
     const violationCount = countResults(violations);
@@ -169,7 +172,7 @@ async function writeCompleteResults(testedURLs) {
     await Promise.all(violations.map(violation => writeToFile(printResultsList(violation))));
   }));
 
-  writeToFile(marked('## Detailed List of Passing Tests'));
+  writeToFile(marked(`## Detailed List of Passing Tests: ${this[TOTALS].passes} passing tests`));
   await Promise.all(testedURLs.map(async ({ url }) => {
     const passes = await this[OPTIONS].db.read('passes_summary', { url });
     const passCount = countResults(passes);
