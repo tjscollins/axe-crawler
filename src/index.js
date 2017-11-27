@@ -1,12 +1,7 @@
-import { filterLinks, isNatural } from './util';
-import polyfills from './polyfills';
-import crawl from './crawler';
-import DB from './db/index';
+import AxeCrawler from './AxeCrawler';
 import AxeCrawlerConfiguration from './AxeCrawlerConfiguration';
 import TestRunner from './TestRunner';
-
-// Number of page views at which to switch from in-memory DB to filesystem DB
-const USE_FILE_DB = 50;
+import polyfills from './polyfills';
 
 /**
  * main - main function to start scraping the website, build the queue of
@@ -16,39 +11,28 @@ const USE_FILE_DB = 50;
  */
 async function main() {
   const opts = new AxeCrawlerConfiguration();
+  const axeCrawler = new AxeCrawler(opts);
+
   const {
-    logger, check, viewPorts, random, domain,
+    logger, viewPorts, random, domain,
   } = opts;
 
+  const linkQueue = await axeCrawler.crawl();
 
-  // Create Queue of links on main page
-  const linkQueue = await crawl(domain, opts, filterLinks(opts));
+  opts.setNumberToCheck(linkQueue);
 
   logger.info(`Found ${linkQueue.size} links within ${domain}`);
   logger.debug('Queue to be tested: ', linkQueue);
-  const numToCheck = Math.min(
-    isNatural(check) ? check : Infinity,
-    linkQueue.size,
-  );
-  logger.info(`Based on options, testing ${numToCheck} urls`);
+  logger.info(`Based on options, testing ${opts.numToCheck} urls`);
   if (random > 0 && random < 1) {
-    logger.info(`Selecting random sample: ${random} of ${numToCheck} urls`);
+    logger.info(`Selecting random sample: ${random} of ${opts.numToCheck} urls`);
   }
 
-  const viewsToTest = opts.random * numToCheck * viewPorts.length;
-  if (viewsToTest > USE_FILE_DB) {
-    logger.info(`Over ${USE_FILE_DB} page views to test, switching to SQLite file mode to store results`);
-    opts.db = new DB({ type: 'file' });
-  } else {
-    logger.debug(`Fewer than ${USE_FILE_DB} page views, using in-memory SQLite to store results`);
-    opts.db = new DB({ type: 'memory' });
-  }
+  opts.configureDB();
 
-  await opts.db.initialize();
-
-  logger.debug(`Testing ${opts.viewPorts.length} viewPorts: `);
-  viewPorts.forEach((viewPort) => {
-    logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
+  logger.debug(`Testing ${viewPorts.length} viewPorts: `);
+  viewPorts.forEach(({ name, width, height }) => {
+    logger.debug(`\t${name}: ${width}x${height}`);
   });
 
   try {
