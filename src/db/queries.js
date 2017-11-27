@@ -1,6 +1,7 @@
 import {
   AxeResult,
   ViolationsReport,
+  PassesReport,
 } from './schemas.js';
 
 import Logger from '../logger.js';
@@ -11,11 +12,15 @@ export default async function queries(knex) {
   log.debug('Defining CRUD FNs');
   AxeResult.knex(knex);
   ViolationsReport.knex(knex);
+  PassesReport.knex(knex);
   await AxeResult.createTable(knex);
   await ViolationsReport.createTable(knex);
+  await PassesReport.createTable(knex);
 
   const create = {
-    axe_result: async ({ url, viewPort, violations }) => {
+    axe_result: async ({
+      url, viewPort, violations, passes,
+    }) => {
       log.debug('Inserting axe_result');
       return Promise.all([
         AxeResult
@@ -24,6 +29,9 @@ export default async function queries(knex) {
         ViolationsReport
           .query()
           .insert({ url, viewPort, report: violations }),
+        PassesReport
+          .query()
+          .insert({ url, viewPort, report: passes }),
       ]).catch((err) => {
         log.error(`at queries.js:28\n${err}`);
       });
@@ -53,9 +61,13 @@ export default async function queries(knex) {
     violations_summary: ({ url }) => ViolationsReport
       .query()
       .where('url', url),
+    passes_summary: ({ url }) => PassesReport
+      .query()
+      .where('url', url),
     summary: async ({ url }) => {
       const violations = await ViolationsReport.query().where('url', url);
-      return { violations };
+      const passes = await PassesReport.query().where('url', url);
+      return { violations, passes };
     },
   };
 
