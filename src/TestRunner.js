@@ -108,6 +108,7 @@ async function testPage(testCase) {
     await db.create('axe_result', {
       url,
       violations: JSON.stringify(report.violations),
+      passes: JSON.stringify(report.passes),
       viewPort: `${name}:${width}x${height}`,
     });
   } catch (err) {
