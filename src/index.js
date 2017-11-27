@@ -1,153 +1,13 @@
-import webDriver, { logging } from 'selenium-webdriver';
-import chromeDriver from 'selenium-webdriver/chrome';
-import axeBuilder from 'axe-webdriverjs';
-
-import { filterLinks, selectSampleSet, isNatural } from './util';
+import { filterLinks, isNatural } from './util';
 import polyfills from './polyfills';
-import { outputToHTML, outputToJSON } from './output';
 import crawl from './crawler';
 import crawlerOpts from './config';
 import DB from './db/index';
 import TestRunner from './TestRunner';
 
-/**
- * returns curried function with access to logger
- *
- * @param {any} { logger }
- * @returns
- */
-function resultsToReports({ logger }) {
-  /**
-   * resultsToReports - function applied by Array.prototype.reduce to array of
-   * results to combine for printing to reports
-   *
-   * @param {Object} reports
-   * @param {Object} result
-   * @param {Object} viewPort
-   * @returns {Object}
-   */
-  return (reports, { result, viewPort }) => {
-    try {
-    /* eslint-disable no-param-reassign */
-      reports[result.url] = Object.assign({
-        violations: {},
-        passes: {},
-      }, reports[result.url]);
+// Number of page views at which to switch from in-memory DB to filesystem DB
+const USE_FILE_DB = 50;
 
-      reports[result.url].violations[viewPort.name] = result.violations;
-      reports[result.url].passes[viewPort.name] = result.passes;
-
-    /* eslint-enable no-param-reassign */
-    } catch (err) {
-      logger.error(err);
-    }
-    return reports;
-  };
-}
-
-/**
- * generateReportSaveFn - output the results of axe-core's test to HTML and
- * JSON formats
- *
- * @param {Object} globalOptions
- * @returns {Function} callback function to print results of axe-core tests.
- */
-function generateReportSaveFn(opts) {
-  const { output, logger, sql } = opts;
-  return async (results) => {
-    logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
-    const reports = results.reduce(resultsToReports(opts), {});
-    if (sql) {
-      await Promise.all(Object.keys(reports).map(async (url) => {
-        await opts.db.create('axe_result', {
-          url,
-          violations: JSON.stringify(reports[url].violations),
-          viewPort: 'test viewPort',
-        });
-      }));
-    } else {
-      outputToJSON(`${output}.json`, reports, opts);
-      outputToHTML(`${output}.html`, reports, opts);
-    }
-  };
-}
-
-/**
- * Generates a callback function for used to reduce list of urls into
- * list of {url, viewPort} combinations
- *
- * @param {Object} globalOptions
- * @returns {Function} callback function for reduce
- */
-function createURLViewSet(opts) {
-  return (links, url) => {
-    opts.viewPorts.forEach((viewPort) => {
-      links.push({ url, viewPort });
-    });
-    return links;
-  };
-}
-/**
- * returns a test function with access to the logger
- *
- * @param {any} { logger }
- * @returns
- */
-function testPage({ logger, verbose, sql }) {
-  /**
-   * runs axe-core tests for supplied testCase.  Returns the results of
-   * that test.
-   *
-   * @param {Object} testCase
-   * @param {string} testCase.url url of the testCase
-   * @param {Object} testCase.viewPort
-   * @param {string} testCase.viewPort.name name of this viewPort (e.g. mobile or
-   *  desktop)
-   * @param {number} testCase.viewPort.width
-   * @param {number} testCase.viewPort.height
-   */
-  return async (testCase) => {
-    try {
-      logger.debug('Test case: ', testCase);
-      const { url, viewPort: { name, width, height }, viewPort } = testCase;
-
-      const chromeLoggingPrefs = new webDriver.logging.Preferences();
-      chromeLoggingPrefs.setLevel(webDriver.logging.Type.BROWSER, webDriver.logging.Level.OFF);
-      chromeLoggingPrefs.setLevel(webDriver.logging.Type.CLIENT, webDriver.logging.Level.OFF);
-
-      const options = new chromeDriver.Options();
-      // options.setLoggingPrefs(chromeLoggingPrefs);
-      options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
-
-      const driver = new webDriver.Builder()
-        .setLoggingPrefs(chromeLoggingPrefs)
-        .forBrowser('chrome')
-        .setChromeOptions(options)
-        .build();
-
-      const report = await new Promise((resolve, reject) => {
-        logger.info(`Getting ${url}`);
-        driver.get(url).then(() => {
-          logger.info(`Testing ${url} ${name}`);
-          axeBuilder(driver)
-            .analyze((result, err) => {
-              if (err) {
-                reject(err);
-              }
-              logger.debug(`Results for ${url} ${name} received`);
-              resolve({ result, viewPort });
-              driver.close();
-            });
-        });
-      });
-      return report;
-    } catch (err) {
-      logger.error('Error encountered in using Selenium Webdriver: ');
-      logger.error(err);
-      process.exit(1);
-    }
-  };
-}
 /**
  * main - main function to start scraping the website, build the queue of
  *  individual pages and run axe tests on each page
@@ -176,35 +36,29 @@ async function main() {
   logger.info(`Based on options, testing ${numToCheck} urls`);
 
   if (random > 0 && random < 1) {
-    logger.info(`Selecting random sample ${random} of total`);
+    logger.info(`Selecting random sample: ${random} of ${numToCheck} urls`);
   } else {
     opts.random = 1;
   }
 
   const viewsToTest = opts.random * numToCheck * viewPorts.length;
-  if (viewsToTest < 100) {
-    logger.info('Over 100 page views to test, switching to SQLite mode to store results');
-    opts.sql = true;
+  if (viewsToTest > USE_FILE_DB) {
+    logger.info(`Over ${USE_FILE_DB} page views to test, switching to SQLite file mode to store results`);
     opts.db = new DB({ type: 'file' });
-    await opts.db.initialize();
+  } else {
+    logger.debug(`Fewer than ${USE_FILE_DB} page views, using in-memory SQLite to store results`);
+    opts.db = new DB({ type: 'memory' });
   }
+
+  await opts.db.initialize();
 
   logger.debug(`Testing ${opts.viewPorts.length} viewPorts: `);
   viewPorts.forEach((viewPort) => {
     logger.debug(`\t${viewPort.name}: ${viewPort.width}x${viewPort.height}`);
   });
 
-  // Test each link
-  // Promise.all([...linkQueue]
-  //   .reduce(selectSampleSet(opts), [])
-  //   .slice(0, numToCheck)
-  //   .reduce(createURLViewSet(opts), [])
-  //   .map(testPage(opts)))
-  //   .then(generateReportSaveFn(opts))
-  //   .then(() => opts.db.read('axe_result', { url: 'http://cnmipss.org', viewPort: 'desktop' }))
-  //   .catch(err => opts.logger.error(err));
-
   try {
+    Object.freeze(opts);
     const runner = new TestRunner(opts);
     await runner.queue(linkQueue);
     await runner.run();
@@ -213,6 +67,7 @@ async function main() {
     logger.error(err);
     process.exit(1);
   }
+  process.exit(0);
 }
 
 polyfills();
