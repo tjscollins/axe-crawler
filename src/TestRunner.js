@@ -19,7 +19,6 @@ const QUEUE = Symbol('Queue');
  */
 const SAMPLE = Symbol('Take a random sample');
 const TEST_PAGE = Symbol('Run axe-core tests on a page');
-const HTML_REPORT = Symbol('Generate HTML report');
 const CREATE_TEST_VIEWS = Symbol('Create a list of views to test');
 
 
@@ -29,7 +28,6 @@ export default class TestRunner {
     this[TEST_PAGE] = testPage.bind(this);
     this[SAMPLE] = selectSampleSet(this[OPTIONS]);
     this[CREATE_TEST_VIEWS] = createURLViewSet(this[OPTIONS]);
-    // this[HTML_REPORT] = createHTMLReport.bind(this);
   }
 
   /**
