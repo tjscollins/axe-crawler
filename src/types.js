@@ -1,4 +1,10 @@
 /**
+ * DOMNode
+ *
+ * @typedef {object} DOMNode
+ */
+
+/**
  * Logger object for managing logging at different log levels
  *
  * @typedef {object} Logger
