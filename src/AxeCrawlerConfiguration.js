@@ -48,8 +48,20 @@ const ARGS = Symbol('Command line arguments');
 const JSON_OPTS = Symbol('JSON specified configuration');
 const DEFAULT_CONFIG = Symbol('Default configuration');
 
-/* --- Class Declaration and Public Method Implementations --- */
+/**
+ * Manages confgiuration of axe-crawler by combining default, JSON,
+ * and command line options into one object and setting up the database
+ * connection based on those options.
+ *
+ * @export
+ * @class AxeCrawlerConfiguration
+ */
 export default class AxeCrawlerConfiguration {
+  /**
+   * Creates an instance of AxeCrawlerConfiguration.
+   *
+   * @memberof AxeCrawlerConfiguration
+   */
   constructor() {
     // Values
     this[DEFAULT_CONFIG] = DEFAULT_OPTS;
@@ -65,6 +77,15 @@ export default class AxeCrawlerConfiguration {
     this.logger.debug('Crawling with options: \n', this);
   }
 
+  /**
+   * Set numToCheck property by compary queue size with check option,
+   * choosing the smaller of the two.
+   *
+   * @param {Set<string>} queue
+   *
+   * @public
+   * @memberof AxeCrawlerConfiguration
+   */
   setNumberToCheck(queue) {
     const { check } = this;
     this.numToCheck = Math.min(
@@ -73,6 +94,13 @@ export default class AxeCrawlerConfiguration {
     );
   }
 
+  /**
+   * Setup and connect to SQLite DB, choosing between in-memory and file
+   * based DB based on expected memory needs.
+   *
+   * @public
+   * @memberof AxeCrawlerConfiguration
+   */
   async configureDB() {
     const {
       random, viewPorts, numToCheck, useFileOver, logger,
