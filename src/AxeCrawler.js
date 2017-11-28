@@ -3,8 +3,6 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 import { filterLinks } from './util';
 
-const spex = require('spex')(Promise);
-
 /* --- Symbols for Private Members --- */
 
 // Values
@@ -14,9 +12,16 @@ const UNIQUE_LINKS = Symbol('Set of unique links to be tested');
 // Methods
 const QUEUE_LINKS = Symbol('Add all links on a page to UNIQUE_LINKS');
 const FILTER_LINKS = Symbol('Filter out broken, invalid, media, etc. links');
+const BATCH_GET_CONTENT = Symbol('Perform axios.get on each url in an array and return array of completed responses');
+const BATCH_PARSE_LINKS = Symbol('Build a set of links scraped from an array of axios reponses');
 
 /* --- Class Declaration and Public Method Implementations --- */
 export default class AxeCrawler {
+  /**
+   * Creates an instance of AxeCrawler.
+   * @param {AxeCrawlerConfiguration}      opts
+   * @memberof AxeCrawler
+   */
   constructor(opts) {
     // Values
     this[OPTIONS] = opts;
@@ -25,59 +30,43 @@ export default class AxeCrawler {
     // Methods
     this[QUEUE_LINKS] = queueLinks.bind(this);
     this[FILTER_LINKS] = filterLinks(opts);
+    this[BATCH_GET_CONTENT] = batchGetContent.bind(this);
+    this[BATCH_PARSE_LINKS] = batchParseLinks.bind(this);
   }
 
   /**
- * Crawls through page links and builds a set of all pages to test.
- * Goes 5 levels deep through links checking for new pages by default
- *
- * @param {String}        domain domain to crawle for links
- * @param {any}           { depth = 5, logger } Options object
- * @param {Function}      filterFn filter function to apply to list of links
- * @returns {Set<string>} this[UNIQUE_LINKS]
- *
- * @public
- * @memberof AxeCrawler
- */
+   * Crawls through page links and builds a set of all pages to test.
+   * Goes 5 levels deep through links checking for new pages by default
+   *
+   * @returns {Set<string>} this[UNIQUE_LINKS]
+   *
+   * @public
+   * @memberof AxeCrawler
+   */
   async crawl() {
     const { domain, depth = 5, logger } = this[OPTIONS];
 
     // Validate url and throw error if invalid, else add to unique set
-    const url = `http://${domain}`;
-    if (!isURL(url)) {
-      throw new Error(`Invalid url: ${url}`);
+    const firstUrl = `http://${domain}`;
+    if (!isURL(firstUrl)) {
+      throw new Error(`Invalid url: ${firstUrl}`);
     }
-    this[UNIQUE_LINKS].add(url);
+    this[UNIQUE_LINKS].add(firstUrl);
 
-    // Fast return initial url if depth === 0
+    // Fast return if depth === 0
     if (depth === 0) {
       return this[UNIQUE_LINKS];
     }
 
     try {
-      logger.debug(`Crawling ${url}`);
+      logger.debug(`Crawling ${firstUrl}`);
       let links = this[UNIQUE_LINKS];
 
       for (let i = 0; i < depth; i += 1) {
-        logger.debug(`Crawling for links at DEPTH ${i}`);
+        logger.debug(`Crawling for links at DEPTH ${i + 1}`);
 
-        const linkedContent = [];
-        await [...links]
-          .reduce(
-            (promise, url, i) => promise
-              .then(() => {
-                logger.debug(`Fetching #${i + 1}: ${url}`);
-                return axios.get(url).catch(err => err)
-                  .then(result => linkedContent.push(result));
-              }),
-            Promise.resolve([]),
-          );
-
-        links = linkedContent
-          .filter(content => !(content instanceof Error))
-          .map(newPage => this[QUEUE_LINKS](domain, newPage))
-          .reduce(combineLinkSets, new Set())
-          .difference(this[UNIQUE_LINKS]);
+        const linkedContent = await this[BATCH_GET_CONTENT](links);
+        links = this[BATCH_PARSE_LINKS](linkedContent);
 
         if (links.size === 0) {
           break;
@@ -89,6 +78,7 @@ export default class AxeCrawler {
           this[UNIQUE_LINKS].add(address);
         }
       }
+
       return this[UNIQUE_LINKS];
     } catch (err) {
       logger.error('Error crawling for links: ', err);
@@ -98,6 +88,49 @@ export default class AxeCrawler {
 }
 
 /* --- Private Method Implementations --- */
+/**
+ * Parse the axios responses and return the set of all links in those response
+ * that are not currently in this[UNIQUE_LINKS]
+ *
+ * @param {AxiosResponse[]} linkedContent
+ * @returns {Set<string>}
+ *
+ * @private
+ * @memberof AxeCrawler
+ */
+function batchParseLinks(linkedContent) {
+  return linkedContent
+    .filter(content => !(content instanceof Error))
+    .map(newPage => this[QUEUE_LINKS](domain, newPage))
+    .reduce(combineLinkSets, new Set())
+    .difference(this[UNIQUE_LINKS]);
+}
+
+/**
+ * Perform axios.get on each element in an array of links and
+ * return an array of the resulting responses
+ *
+ * @param {string[]} links
+ * @returns {object[]} pageContents
+ *
+ * @private
+ * @memberof AxeCrawler
+ */
+async function batchGetContent(links) {
+  const { logger } = this[OPTIONS];
+  const content = [];
+  await [...links]
+    .reduce(
+      (promise, url, i) => promise
+        .then(() => {
+          logger.debug(`Fetching #${i + 1}: ${url}`);
+          return axios.get(url).catch(err => err)
+            .then(result => content.push(result));
+        }),
+      Promise.resolve([]),
+    );
+  return content;
+}
 
 /**
  * Generates a helper function to pull the href attribute off a DOM
