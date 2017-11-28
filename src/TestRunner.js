@@ -76,14 +76,31 @@ export default class TestRunner {
 }
 
 /* --- Private Methods --- */
+/**
+ * Launches chromedriver and injects aXe testing library for a given testCase
+ *
+ * @param {Object}          testCase
+ * @param {String}          testCase.url
+ * @param {Object}          testCase.viewPort
+ * @param {String}          testCase.viewPort.name
+ * @param {Number|String}   testCase.viewPort.height
+ * @param {Number|String}   testCase.viewPort.width
+ *
+ * @private
+ * @memberof TestRunner
+ */
 async function testPage(testCase) {
   const { logger, db } = this[OPTIONS];
+
   try {
-    logger.debug('Test case: ', testCase);
     const { url, viewPort: { name, width, height } } = testCase;
 
     const options = new chromeDriver.Options();
-    options.addArguments('headless', 'disable-gpu', `--window-size=${width},${height}`);
+    options.addArguments(
+      'headless',
+      'disable-gpu',
+      `--window-size=${width},${height}`,
+    );
 
     const driver = new webDriver.Builder()
       .forBrowser('chrome')
@@ -91,9 +108,11 @@ async function testPage(testCase) {
       .build();
 
     const report = await new Promise((resolve, reject) => {
-      logger.info(`Getting ${url}`);
       driver.get(url).then(() => {
+        logger.debug('Test case: ', testCase);
+        logger.info(`Got ${url}`);
         logger.info(`Testing ${url} ${name}`);
+
         axeBuilder(driver)
           .analyze((result, err) => {
             if (err) {
@@ -105,6 +124,7 @@ async function testPage(testCase) {
           });
       });
     });
+
     await db.create('axe_result', {
       url,
       violations: JSON.stringify(report.violations),
@@ -117,36 +137,3 @@ async function testPage(testCase) {
     process.exit(1);
   }
 }
-
-
-/**
- * generateReportSaveFn - output the results of axe-core's test to HTML and
- * JSON formats
- *
- * @param {Object} globalOptions
- * @returns {Function} callback function to print results of axe-core tests.
- */
-function generateReportSaveFn(opts) {
-  const { output, logger, sql } = opts;
-  return async (results) => {
-    logger.debug('Creating reports: ', `${output}.json`, `${output}.html`);
-    const reports = results.reduce(resultsToReports(opts), {});
-    if (sql) {
-      await Promise.all(Object.keys(reports).map(async (url) => {
-        await opts.db.create('axe_result', {
-          url,
-          violations: JSON.stringify(reports[url].violations),
-          viewPort: 'test viewPort',
-        });
-      }));
-    } else {
-      outputToJSON(`${output}.json`, reports, opts);
-    }
-  };
-}
-
-function createHTMLReport(reports) {
-  initHTML.call(this);
-//   outputToHTML(`${this[OPTIONS].output}.html`, reports, this[OPTIONS]);
-}
-
