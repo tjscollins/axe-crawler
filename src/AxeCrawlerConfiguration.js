@@ -62,14 +62,14 @@ export default class AxeCrawlerConfiguration {
    *
    * @memberof AxeCrawlerConfiguration
    */
-  constructor() {
+  constructor(opts = {}) {
     // Values
     this[DEFAULT_CONFIG] = DEFAULT_OPTS;
     this[ARGS] = processArgs.call(this);
     this[JSON_OPTS] = processJSON.call(this);
 
     // Options become immutable public values
-    Object.assign(this, this[DEFAULT_CONFIG], this[JSON_OPTS], this[ARGS]);
+    Object.assign(this, this[DEFAULT_CONFIG], this[JSON_OPTS], this[ARGS], opts);
 
     // Sanity check for some values
     checkValues.call(this);
