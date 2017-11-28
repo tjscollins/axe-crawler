@@ -3,6 +3,8 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 import { filterLinks } from './util';
 
+const spex = require('spex')(Promise);
+
 /* --- Symbols for Private Members --- */
 
 // Values
@@ -29,11 +31,13 @@ export default class AxeCrawler {
  * Crawls through page links and builds a set of all pages to test.
  * Goes 5 levels deep through links checking for new pages by default
  *
- * @export
- * @param {String} domain domain to crawle for links
- * @param {any} { depth = 5, logger } Options object
- * @param {Function} filterFn filter function to apply to list of links
- * @returns
+ * @param {String}        domain domain to crawle for links
+ * @param {any}           { depth = 5, logger } Options object
+ * @param {Function}      filterFn filter function to apply to list of links
+ * @returns {Set<string>} this[UNIQUE_LINKS]
+ *
+ * @public
+ * @memberof AxeCrawler
  */
   async crawl() {
     const { domain, depth = 5, logger } = this[OPTIONS];
@@ -56,9 +60,11 @@ export default class AxeCrawler {
 
       for (let i = 0; i < depth; i += 1) {
         logger.debug(`Crawling for links at DEPTH ${i}`);
+
         const promisedLinks = [...links]
           .map(axios.get)
           .map(request => request.catch(err => err));
+
         const linkedContent = await Promise.all(promisedLinks);
 
         links = linkedContent
@@ -70,6 +76,8 @@ export default class AxeCrawler {
         if (links.size === 0) {
           break;
         }
+
+        logger.debug(`${links.size} links found`);
 
         for (const address of links) {
           this[UNIQUE_LINKS].add(address);
