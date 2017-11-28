@@ -61,11 +61,17 @@ export default class AxeCrawler {
       for (let i = 0; i < depth; i += 1) {
         logger.debug(`Crawling for links at DEPTH ${i}`);
 
-        const promisedLinks = [...links]
-          .map(axios.get)
-          .map(request => request.catch(err => err));
-
-        const linkedContent = await Promise.all(promisedLinks);
+        const linkedContent = [];
+        await [...links]
+          .reduce(
+            (promise, url, i) => promise
+              .then(() => {
+                logger.debug(`Fetching #${i + 1}: ${url}`);
+                return axios.get(url).catch(err => err)
+                  .then(result => linkedContent.push(result));
+              }),
+            Promise.resolve([]),
+          );
 
         links = linkedContent
           .filter(content => !(content instanceof Error))
