@@ -19,6 +19,13 @@ const WRITE_COMPLETE_RESULTS = Symbol('Write complete test results to html');
 const CLOSE_HTML = Symbol('Append closing tags and close html file');
 
 /* --- Class Declaration and Public Method Implementations --- */
+
+/**
+ * Manages writing data from SQLite to HTML Report
+ *
+ * @export
+ * @class HTMLReporter
+ */
 export default class HTMLReporter {
   constructor(opts) {
     // Values
@@ -32,18 +39,41 @@ export default class HTMLReporter {
     this[CLOSE_HTML] = closeHTML.bind(this);
   }
 
+  /**
+   * Open HTML file to write the report to
+   *
+   * @param {string} [filename='report.html']
+   *
+   * @public
+   * @memberof HTMLReporter
+   */
   async open(filename = 'report.html') {
     fs.writeFileSync(filename, '');
     this[FILE_NAME] = fs.openSync(filename, 'w');
     this[WRITE_TO_FILE] = string => fs.writeSync(this[FILE_NAME], string);
   }
 
+  /**
+   * Pull data from SQLite and create HTML report, writing to file in chunks.
+   *
+   * @param {Object[]}  views
+   * @param {String}    views[].url
+   *
+   * @public
+   * @memberof HTMLReporter
+   */
   async write(views) {
     await this[INIT_HTML]();
     await this[WRITE_SUMMARY_TABLE](views);
     await this[WRITE_COMPLETE_RESULTS](views);
   }
 
+  /**
+   * Finish and close HTML file
+   *
+   * @public
+   * @memberof HTMLReporter
+   */
   async close() {
     this[CLOSE_HTML]();
   }
@@ -51,6 +81,12 @@ export default class HTMLReporter {
 
 
 /* --- Private Method Implementations --- */
+/**
+ * Write HTML head and title content
+ *
+ * @private
+ * @memberof HTMLReporter
+ */
 function initHTML() {
   const writeToFile = this[WRITE_TO_FILE];
 
@@ -63,6 +99,7 @@ function initHTML() {
     writeToFile(marked(`This report represents only a random sample of ${Math.round(this[OPTIONS].random * 100)}% of all webpages on this domain.`));
   }
 }
+
 
 function testResultList(reports, type) {
   const resultList = new Set();
@@ -77,6 +114,15 @@ function testResultList(reports, type) {
   return resultList.size > 0 ? marked([...resultList].reduce((list, item) => list + item, '')) : `No ${type} detected by axe-core`;
 }
 
+/**
+ * Write a summary table of axe-core test results to the HTML file.
+ *
+ * @param {Object[]}    testedURLs
+ * @param {String}      testedURLs[].url
+ *
+ * @private
+ * @memberof HTMLReporter
+ */
 async function writeSummaryTable(testedURLs) {
   const writeToFile = this[WRITE_TO_FILE];
 
@@ -93,6 +139,12 @@ async function writeSummaryTable(testedURLs) {
   writeToFile('</tbody></table>');
 }
 
+/**
+ * Write closing tags and close HTML file
+ *
+ * @private
+ * @memberof HTMLReporter
+ */
 function closeHTML() {
   const writeToFile = this[WRITE_TO_FILE];
 
@@ -139,7 +191,18 @@ function printViewCounts(reports, reportType) {
   /* eslint-enable no-param-reassign */
 }
 
-function printResultsList({ viewPort, url, report }) {
+/**
+ * Formats axe-core test data into html string listing the relevant
+ * DOM nodes for each test.
+ *
+ * @param {object}     testResults
+ * @param {string}  testResults.viewPort
+ * @param {string}  testResults.url
+ * @param {string}  testResults.report
+ * @returns {string}
+ */
+function printResultsList(testResults) {
+  const { viewPort, url, report } = testResults;
   const results = JSON.parse(report);
   let html = `<h4>${viewPort.toUpperCase()}</h4><br/><ol>`;
   if (results.length > 0) {
@@ -159,12 +222,24 @@ function printResultsList({ viewPort, url, report }) {
   return '';
 }
 
+/**
+ * Write a complete listing all tests and their relevant DOM nodes
+ *
+ * @param {Object[]}    testedURLs
+ * @param {String}      testedURLs[].url
+ *
+ * @private
+ * @memberof HTMLReporter
+ */
 async function writeCompleteResults(testedURLs) {
   const writeToFile = this[WRITE_TO_FILE];
-
   writeToFile(marked(`## Detailed List of Failing Tests: ${this[TOTALS].violations} failing tests`));
   await Promise.all(testedURLs.map(async ({ url }) => {
-    const violations = await this[OPTIONS].db.read('violations_summary', { url });
+    const violations = await this[OPTIONS].db.read(
+      'violations_summary',
+      { url },
+    );
+
     const violationCount = countResults(violations);
     writeToFile(marked(`### ${escape(url)} ${violationCount} violations`));
     writeToFile('<br/>');
@@ -174,7 +249,11 @@ async function writeCompleteResults(testedURLs) {
 
   writeToFile(marked(`## Detailed List of Passing Tests: ${this[TOTALS].passes} passing tests`));
   await Promise.all(testedURLs.map(async ({ url }) => {
-    const passes = await this[OPTIONS].db.read('passes_summary', { url });
+    const passes = await this[OPTIONS].db.read(
+      'passes_summary',
+      { url },
+    );
+
     const passCount = countResults(passes);
     writeToFile(marked(`### ${escape(url)} ${passCount} passing tests`));
     writeToFile('<br/>');
