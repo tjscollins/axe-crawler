@@ -99,6 +99,7 @@ export default class AxeCrawler {
  * @memberof AxeCrawler
  */
 function batchParseLinks(linkedContent) {
+  const { domain } = this[OPTIONS];
   return linkedContent
     .filter(content => !(content instanceof Error))
     .map(newPage => this[QUEUE_LINKS](domain, newPage))
