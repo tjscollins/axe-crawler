@@ -78,6 +78,7 @@ describe('AxeCrawler', () => {
       return crawler.crawl().then((result) => {
         expect(result).toBeInstanceOf(Set);
         expect(result.size).toBe(2);
+        expect(result.has('http://test.test/page3.html')).toBe(false);
       });
     });
 
