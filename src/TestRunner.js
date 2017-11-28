@@ -57,6 +57,11 @@ export default class TestRunner {
     await Promise.all(this[QUEUE].map(this[TEST_PAGE]));
   }
 
+  /**
+   * Generate HTML and JSON reports
+   *
+   * @memberof TestRunner
+   */
   async report() {
     const { logger, db } = this[OPTIONS];
     const testedPages = await db.read('tested_pages');
