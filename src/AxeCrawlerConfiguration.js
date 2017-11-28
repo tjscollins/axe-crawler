@@ -92,7 +92,7 @@ export default class AxeCrawlerConfiguration {
 /* --- Private Method Implementations --- */
 function checkValues() {
   const { logger, random } = this;
-  if (!(random > 0 && random < 1)) {
+  if (!(random > 0 && random <= 1)) {
     logger.error(`Invalid random sampling rate specified: ${random}.  Defaulting to 100%`);
     this.random = 1;
   }
