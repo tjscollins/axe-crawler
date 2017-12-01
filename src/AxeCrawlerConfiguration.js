@@ -12,9 +12,9 @@ const DEFAULT_OPTS = {
   depth: 5,
   check: undefined, // undefined => check all
   output: 'reports',
-  ignore: '.*',
+  ignore: '^$',
   whitelist: '.*',
-  random: false,
+  random: 1,
   viewPorts: [
     {
       name: 'mobile',
