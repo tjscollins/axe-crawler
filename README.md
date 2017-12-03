@@ -6,7 +6,7 @@ axe-crawler is a Node.js webcrawler which tests every page it can find in a sing
 
 axe-crawler produces a detailed html summary report of the accessibility issues it finds on pages in the domain in addition to raw JSON data output from the tests.
 
-**WARNING:** Depending on the number of tests run (urls x viewPorts) the raw JSON data output can be quite large, easily in the tens of megabytes.  Use the --check, --random, and --viewPort options to control which pages are tested.
+Depending on the number of tests run (urls x viewPorts) the raw JSON data output can be quite large, easily in the tens of megabytes.  Use the --check, --random, and --viewPort options to control which pages are tested and how many times.
 
 ## Installation
 
@@ -32,8 +32,6 @@ By default, axe-crawler ignores links that end in common media or document exten
 When axe-crawler finishes crawling through the domain to the specified depth (default: 5), or when it stops finding new links, it then uses selenium, chrome-driver, and axe-core to open a headless Chrome browser and test each link in the queue for accessibility at each specified viewPort resolution (default: mobile, tablet\_vertical, tablet\_horizontal, and desktop).
 
 Each url found will be visited a total of once + the number of viewPorts specified (default: 5 times total).  In order to avoid overloading servers the selenium driven requests are done synchronously rather than asynchronously.
-
-*Please be considerate in your use of this or any web scraping tool.  Don't point it at other people's domains without permission.  It is recommended to use this tool on testing/staging servers rather than production servers for obvious reasons.*
 
 ## Configuration
 
@@ -145,3 +143,4 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
 
 * Oauth functionality for testing pages behind logins
 * Configure Selenium logging via axe-crawler configuration
+* More detailed reports with visualizations of data and tracking of issues over time
