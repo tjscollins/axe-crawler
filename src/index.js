@@ -12,14 +12,13 @@ import polyfills from './polyfills';
 async function main() {
   const opts = new AxeCrawlerConfiguration();
   const axeCrawler = new AxeCrawler(opts);
+  const linkQueue = await axeCrawler.crawl();
+
+  opts.setNumberToCheck(linkQueue);
 
   const {
     logger, viewPorts, random, domain,
   } = opts;
-
-  const linkQueue = await axeCrawler.crawl();
-
-  opts.setNumberToCheck(linkQueue);
 
   logger.info(`Found ${linkQueue.size} links within ${domain}`);
   logger.debug('Queue to be tested: ', linkQueue);

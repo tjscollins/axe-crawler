@@ -37,11 +37,8 @@ export default class TestRunner {
    * @memberof TestRunner
    */
   queue(queue) {
-    const { check } = this[OPTIONS];
-    const numToCheck = Math.min(
-      isNatural(check) ? check : Infinity,
-      queue.size,
-    );
+    const { numToCheck } = this[OPTIONS];
+
     this[QUEUE] = [...queue]
       .reduce(this[SAMPLE], [])
       .slice(0, numToCheck)
