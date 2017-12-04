@@ -20,20 +20,20 @@
  *
  * @typedef {object} AxeCrawlerConfiguration
  * @property {number} depth
- * @property {number|undefined} check
+ * @property {number} check
  * @property {string} output
  * @property {string} ignore
  * @property {string} whitelist
  * @property {number|boolean} random
- * @property {object[]} viewPorts
- * @property {string} viewPorts[].name
- * @property {number} viewPorts[].width
- * @property {number} viewPorts[].height
  * @property {string} verbose
  * @property {number} useFileOver
  * @property {Logger} logger
  * @property {string} domain
- * @property {number|undefined} numToCheck
+ * @property {number} numToCheck
+ * @property {object[]} viewPorts
+ * @property {string} viewPorts[].name
+ * @property {number} viewPorts[].width
+ * @property {number} viewPorts[].height
  *
  * @method setNumToCheck
  * @method configureDB

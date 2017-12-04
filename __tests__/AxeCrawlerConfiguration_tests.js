@@ -1,6 +1,5 @@
 import fs from 'fs';
 import sinon from 'sinon';
-import proxyquire from 'proxyquire';
 
 import polyfills from '../src/polyfills';
 import AxeCrawlerConfiguration from '../src/AxeCrawlerConfiguration';

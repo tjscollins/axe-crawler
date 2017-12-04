@@ -20,19 +20,22 @@ async function main() {
     logger, viewPorts, random, domain,
   } = opts;
 
-  logger.info(`Found ${linkQueue.size} links within ${domain}`);
-  logger.debug('Queue to be tested: ', linkQueue);
-  logger.info(`Based on options, testing ${opts.numToCheck} urls`);
+  logger.debug('Queue to be tested: ', JSON.stringify(linkQueue, null, 4));
+  logger.info(
+    `Found ${linkQueue.size} links within ${domain}`,
+    `Based on options, testing ${opts.numToCheck} urls`,
+  );
   if (random > 0 && random < 1) {
     logger.info(`Selecting random sample: ${random} of ${opts.numToCheck} urls`);
   }
 
   await opts.configureDB();
 
-  logger.debug(`Testing ${viewPorts.length} viewPorts: `);
+  let viewPortString = '';
   viewPorts.forEach(({ name, width, height }) => {
-    logger.debug(`\t${name}: ${width}x${height}`);
+    viewPortString += `\t\t${name}: ${width}x${height}\n`;
   });
+  logger.debug(`Testing ${viewPorts.length} viewPorts: \n${viewPortString}`);
 
   try {
     Object.freeze(opts);

@@ -1,8 +1,8 @@
 import fs from 'fs';
 import minimist from 'minimist';
+import Logger from 'utility-logger';
 
 import DB from './db/index';
-import Logger from './logger';
 import { isNatural } from './util';
 
 /* --- Constants --- */
@@ -74,7 +74,7 @@ export default class AxeCrawlerConfiguration {
     // Sanity check for some values
     checkValues.call(this);
 
-    this.logger.debug('Crawling with options: \n', this);
+    this.logger.debug('Crawling with the following options: ', JSON.stringify(this, null, 4));
   }
 
   /**
@@ -88,10 +88,7 @@ export default class AxeCrawlerConfiguration {
    */
   setNumberToCheck(queue) {
     const { check } = this;
-    this.numToCheck = Math.min(
-      isNatural(check) ? check : Infinity,
-      queue.size,
-    );
+    this.numToCheck = Math.min(isNatural(check) ? check : Infinity, queue.size);
   }
 
   /**
@@ -149,13 +146,13 @@ function processArgs() {
     verbose = 'quiet';
   }
 
-  const logger = new Logger(verbose);
+  const logger = new Logger({ level: verbose });
 
   if (argv.dryRun) {
-    logger.force(`Performing dry run with ${argv.verbose} level logging`);
+    logger.log(`Performing dry run with ${verbose.toUpperCase()} level logging`);
   }
 
-  return Object.assign(argv, { logger, verbose });
+  return Object.assign({}, argv, { logger, verbose });
 }
 
 function processJSON() {
@@ -183,7 +180,8 @@ function processJSON() {
  * @returns {Object[]} array of viewPort objects to be added to globalOptions
  */
 function parseViewPortsArg(views) {
-  return views.split(',')
+  return views
+    .split(',')
     .map((view) => {
       const parser = /(\w+):(\d+)x(\d+)/;
       try {
@@ -196,5 +194,6 @@ function parseViewPortsArg(views) {
       } catch (err) {
         throw new Error('Invalid viewports: ', views);
       }
-    }).filter(view => view);
+    })
+    .filter(view => view);
 }
