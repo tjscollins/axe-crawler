@@ -28,7 +28,7 @@ async function main() {
     logger.info(`Selecting random sample: ${random} of ${opts.numToCheck} urls`);
   }
 
-  opts.configureDB();
+  await opts.configureDB();
 
   logger.debug(`Testing ${viewPorts.length} viewPorts: `);
   viewPorts.forEach(({ name, width, height }) => {
