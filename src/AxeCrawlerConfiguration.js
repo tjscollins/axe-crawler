@@ -140,17 +140,15 @@ function processArgs() {
     // if dryRun, default to verbose = debug
     verbose = argv.verbose || 'debug';
     argv.check = 0;
+
+    if (!argv.quiet) logger.log(`Performing dry run with ${verbose.toUpperCase()} level logging`);
   }
   if (argv.quiet) {
     // --quiet overrides all other verbose settings
     verbose = 'quiet';
   }
 
-  const logger = new Logger({ level: verbose });
-
-  if (argv.dryRun) {
-    logger.log(`Performing dry run with ${verbose.toUpperCase()} level logging`);
-  }
+  const logger = new Logger({ level: verbose || 'error' });
 
   return Object.assign({}, argv, { logger, verbose });
 }
@@ -160,7 +158,7 @@ function processJSON() {
   const optsFile = configFile || DEFAULT_CONFIG_FILE;
   let jsonOpts = {};
   try {
-    jsonOpts = JSON.parse(fs.readFileSync(optsFile));
+    jsonOpts = JSON.parse(fs.readFileSync(optsFile).toString());
   } catch (err) {
     if (err.code === 'ENOENT' && err.path === optsFile) {
       logger.error('No config file found');
@@ -192,7 +190,7 @@ function parseViewPortsArg(views) {
           height,
         };
       } catch (err) {
-        throw new Error('Invalid viewports: ', views);
+        throw new Error(`Invalid viewports: ${views}`);
       }
     })
     .filter(view => view);
