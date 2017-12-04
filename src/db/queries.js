@@ -1,13 +1,9 @@
-import {
-  AxeResult,
-  ViolationsReport,
-  PassesReport,
-} from './schemas.js';
+import { AxeResult, ViolationsReport, PassesReport } from './schemas.js';
 
-import Logger from '../logger.js';
+import Logger from 'utility-logger';
 
 export default async function queries(knex) {
-  const log = new Logger('debug');
+  const log = new Logger({ level: 'debug' });
 
   AxeResult.knex(knex);
   ViolationsReport.knex(knex);
@@ -19,52 +15,41 @@ export default async function queries(knex) {
   const create = {
     axe_result: async ({
       url, viewPort, violations, passes,
-    }) => Promise.all([
-      AxeResult
-        .query()
-        .insert({ url })
-        .catch((err) => {
-          // Drop and ignore duplicate urls, otherwise throw error
-          if (!err.message.match('SQLITE_CONSTRAINT: UNIQUE')) {
-            throw err;
-          }
-        }),
-      ViolationsReport
-        .query()
-        .insert({ url, viewPort, report: violations }),
-      PassesReport
-        .query()
-        .insert({ url, viewPort, report: passes }),
-    ]).catch((err) => {
-      log.error(err);
-    }),
+    }) =>
+      Promise.all([
+        AxeResult.query()
+          .insert({ url })
+          .catch((err) => {
+            // Drop and ignore duplicate urls, otherwise throw error
+            if (!err.message.match('SQLITE_CONSTRAINT: UNIQUE')) {
+              throw err;
+            }
+          }),
+        ViolationsReport.query().insert({ url, viewPort, report: violations }),
+        PassesReport.query().insert({ url, viewPort, report: passes }),
+      ]).catch((err) => {
+        log.error(err);
+      }),
   };
 
   const read = {
     axe_result: ({ url, viewPort }) => {
-      AxeResult
-        .query()
+      AxeResult.query()
         // .where('url', url)
         .then(res => log.debug(`Result received: ${JSON.stringify(res)}`))
         .catch(err => log.error(`Error reading from DB: ${err}`));
 
-      ViolationsReport
-        .query()
+      ViolationsReport.query()
         // .where('url', url)
         .then(res => log.debug(`Result received: ${JSON.stringify(res)}`))
         .catch(err => log.error(`Error reading from DB: ${err}`));
     },
 
-    tested_pages: () => AxeResult
-      .query(),
+    tested_pages: () => AxeResult.query(),
 
-    violations_summary: ({ url }) => ViolationsReport
-      .query()
-      .where('url', url),
+    violations_summary: ({ url }) => ViolationsReport.query().where('url', url),
 
-    passes_summary: ({ url }) => PassesReport
-      .query()
-      .where('url', url),
+    passes_summary: ({ url }) => PassesReport.query().where('url', url),
 
     summary: async ({ url }) => {
       const violations = await ViolationsReport.query().where('url', url);
@@ -84,4 +69,3 @@ export default async function queries(knex) {
     delete: del,
   };
 }
-
