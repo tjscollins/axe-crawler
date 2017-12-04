@@ -2,7 +2,7 @@ import webDriver from 'selenium-webdriver';
 import chromeDriver from 'selenium-webdriver/chrome';
 import axeBuilder from 'axe-webdriverjs';
 
-import { isNatural, selectSampleSet, createURLViewSet } from './util';
+import { selectSampleSet, createURLViewSet } from './util';
 import HTMLReporter from './reporters/HtmlReporter';
 import JSONReporter from './reporters/JSONReporter';
 
@@ -37,11 +37,8 @@ export default class TestRunner {
    * @memberof TestRunner
    */
   queue(queue) {
-    const { check } = this[OPTIONS];
-    const numToCheck = Math.min(
-      isNatural(check) ? check : Infinity,
-      queue.size,
-    );
+    const { numToCheck } = this[OPTIONS];
+
     this[QUEUE] = [...queue]
       .reduce(this[SAMPLE], [])
       .slice(0, numToCheck)
