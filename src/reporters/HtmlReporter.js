@@ -49,9 +49,10 @@ export default class HTMLReporter {
    * @public
    * @memberof HTMLReporter
    */
-  async open(filename = 'report.html') {
-    fs.writeFileSync(filename, '');
-    this[FILE_NAME] = fs.openSync(filename, 'w');
+  async open() {
+    const { output } = this[OPTIONS];
+    fs.writeFileSync(`${output}.html`, '');
+    this[FILE_NAME] = fs.openSync(`${output}.html`, 'w');
     this[WRITE_TO_FILE] = string => fs.writeSync(this[FILE_NAME], string);
   }
 

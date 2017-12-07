@@ -32,9 +32,10 @@ export default class JSONReporter {
    * @param {string} [filename='report.json']
    * @memberof JSONReporter
    */
-  open(filename = 'report.json') {
-    fs.writeFileSync(filename, '');
-    this[FILE_NAME] = fs.openSync(filename, 'w');
+  open() {
+    const { output } = this[OPTIONS];
+    fs.writeFileSync(`${output}.json`, '');
+    this[FILE_NAME] = fs.openSync(`${output}.json`, 'w');
     this[WRITE_TO_FILE] = string => fs.writeSync(this[FILE_NAME], string);
   }
 
@@ -72,18 +73,14 @@ async function writeJSON(testedURLs) {
   const writeToFile = this[WRITE_TO_FILE];
   const { logger } = this[OPTIONS];
 
-  await writeToFile(`{"date": "${new Date().toString()}","title":"aXe Accessibility Engine Report for ${this[OPTIONS].domain}","reports": {`);
+  await writeToFile(`{"date": "${new Date().toString()}","title":"aXe Accessibility Engine Report for ${
+    this[OPTIONS].domain
+  }","reports": {`);
 
   await Promise.all(testedURLs.map(async ({ url }, i, arr) => {
-    const violations = await this[OPTIONS].db.read(
-      'violations_summary',
-      { url },
-    );
+    const violations = await this[OPTIONS].db.read('violations_summary', { url });
 
-    const passes = await this[OPTIONS].db.read(
-      'passes_summary',
-      { url },
-    );
+    const passes = await this[OPTIONS].db.read('passes_summary', { url });
 
     const results = {
       violations: violations.reduce(reduceTestResults, {}),
