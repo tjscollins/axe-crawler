@@ -1,7 +1,8 @@
 {
   "name": "axe-crawler",
-  "version": "0.5.1",
-  "description": "A highly configurable website crawler for automatically testing a website for accessibility issues using the axe-core library.  Uses selenium and headless Chrome to load pages, inject axe-core, and run tests.  Generates an html summary report in addition to raw JSON data.",
+  "version": "0.5.2",
+  "description":
+    "A highly configurable website crawler for automatically testing a website for accessibility issues using the axe-core library.  Uses selenium and headless Chrome to load pages, inject axe-core, and run tests.  Generates an html summary report in addition to raw JSON data.",
   "main": "bin/axe-crawler",
   "keywords": [
     "accessibility",
@@ -68,13 +69,8 @@
   },
   "jest": {
     "collectCoverage": true,
-    "collectCoverageFrom": [
-      "**/src/**/*.js"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/__tests__/"
-    ],
+    "collectCoverageFrom": ["**/src/**/*.js"],
+    "coveragePathIgnorePatterns": ["/node_modules/", "/__tests__/"],
     "verbose": true
   }
 }
