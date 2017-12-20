@@ -11,13 +11,18 @@ import polyfills from './polyfills';
  */
 async function main() {
   const opts = new AxeCrawlerConfiguration();
+  opts.reportVersion();
+
   const axeCrawler = new AxeCrawler(opts);
   const linkQueue = await axeCrawler.crawl();
 
   opts.setNumberToCheck(linkQueue);
 
   const {
-    logger, viewPorts, random, domain,
+    logger,
+    viewPorts,
+    random,
+    domain,
   } = opts;
 
   logger.debug('Queue to be tested: ', JSON.stringify(linkQueue, null, 4));
@@ -32,7 +37,11 @@ async function main() {
   await opts.configureDB();
 
   let viewPortString = '';
-  viewPorts.forEach(({ name, width, height }) => {
+  viewPorts.forEach(({
+    name,
+    width,
+    height,
+  }) => {
     viewPortString += `\t\t${name}: ${width}x${height}\n`;
   });
   logger.debug(`Testing ${viewPorts.length} viewPorts: \n${viewPortString}`);
