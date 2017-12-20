@@ -161,8 +161,6 @@ function processArgs() {
     // if dryRun, default to verbose = debug
     verbose = argv.verbose || 'debug';
     argv.check = 0;
-
-    if (!argv.quiet) logger.log(`Performing dry run with ${verbose.toUpperCase()} level logging`);
   }
   if (argv.quiet) {
     // --quiet overrides all other verbose settings
@@ -172,6 +170,9 @@ function processArgs() {
   const logger = new Logger({
     level: verbose || 'error',
   });
+
+  if (argv.dryRun && !argv.quiet) logger.log(`Performing dry run with ${verbose.toUpperCase()} level logging`);
+
 
   return Object.assign({}, argv, {
     logger,
