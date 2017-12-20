@@ -15,7 +15,6 @@ async function main() {
 
   const axeCrawler = new AxeCrawler(opts);
   const linkQueue = await axeCrawler.crawl();
-
   opts.setNumberToCheck(linkQueue);
 
   const {

@@ -1,7 +1,11 @@
-import { isURL } from 'validator';
+import {
+  isURL,
+} from 'validator';
 import axios from 'axios';
 import cheerio from 'cheerio';
-import { filterLinks } from './util';
+import {
+  filterLinks,
+} from './util';
 
 /* --- Symbols for Private Members --- */
 
@@ -44,12 +48,20 @@ export default class AxeCrawler {
    * @memberof AxeCrawler
    */
   async crawl() {
-    const { domain, depth = 5, logger } = this[OPTIONS];
+    const {
+      domain,
+      depth = 5,
+      logger,
+    } = this[OPTIONS];
 
     // Validate url and throw error if invalid, else add to unique set
     const firstUrl = `http://${domain}`;
-    if (!isURL(firstUrl)) {
-      throw new Error(`Invalid url: ${firstUrl}`);
+    if (domain == undefined) {
+      console.log('No domain provided.  Exiting...');
+      return process.exit(0);
+    } else if (!isURL(firstUrl)) {
+      logger.error(new Error(`Invalid url: ${firstUrl}`));
+      return process.exit(1);
     }
     this[UNIQUE_LINKS].add(firstUrl);
 
@@ -99,7 +111,9 @@ export default class AxeCrawler {
  * @memberof AxeCrawler
  */
 function batchParseLinks(linkedContent) {
-  const { domain } = this[OPTIONS];
+  const {
+    domain,
+  } = this[OPTIONS];
   return linkedContent
     .filter(content => !(content instanceof Error))
     .map(newPage => this[QUEUE_LINKS](domain, newPage))
@@ -118,7 +132,9 @@ function batchParseLinks(linkedContent) {
  * @memberof AxeCrawler
  */
 async function batchGetContent(links) {
-  const { logger } = this[OPTIONS];
+  const {
+    logger,
+  } = this[OPTIONS];
   const content = [];
   await [...links]
     .reduce(
@@ -197,4 +213,3 @@ function combineLinkSets(urlList, urlSet) {
   }
   return urlSet;
 }
-
