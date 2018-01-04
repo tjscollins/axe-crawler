@@ -1,3 +1,18 @@
 h1 {
     text-align: center;
 }
+
+@for $i from 1 through 6 {
+    h#{$i} {
+        font-size: $base-font-size * 2 - 2px * $i !important;
+        font-weight: $base-font-weight + 200;
+        margin-top: 12px - $i * 2;
+        @if $i > 1 {
+            margin-left: 10px * ($i - 1);
+        }
+
+        &>a {
+            font-size: $base-font-size * 2 - 2px * $i !important;            
+        }
+    }
+}

@@ -9,7 +9,7 @@ const OPTIONS = Symbol('Options');
 const FILE_NAME = Symbol('Filename');
 const TOTALS = Symbol('Total count of passing and failing tests');
 const STYLE_SHEETS =
-  '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.8.0/github-markdown.css"><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">';
+  '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.8.0/github-markdown.css"><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">';
 const CSS = fs.readFileSync(`${__dirname}/../index.css`);
 
 // Private Methods
@@ -42,8 +42,6 @@ export default class HTMLReporter {
 
   /**
    * Open HTML file to write the report to
-   *
-   * @param {string} [filename='report.html']
    *
    * @public
    * @memberof HTMLReporter
@@ -155,6 +153,7 @@ async function writeSummaryTable(testedURLs) {
 function closeHTML() {
   const writeToFile = this[WRITE_TO_FILE];
 
+  writeToFile('<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script><script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>');
   writeToFile('</body><script></script></html>');
 
   fs.closeSync(this[FILE_NAME]);
@@ -188,12 +187,12 @@ function writeNodeMessages(list, {
 
 function printViewCounts(reports, reportType) {
   /* eslint-disable no-param-reassign */
-  let body = '<ul>';
+  let body = '<ul class="view-counts" >';
   reports.forEach(({ viewPort, report: results }) => {
     const resultsObject = JSON.parse(results);
-    body += `<li style="list-style: none; height: 15px;"><div class="col-xs-2">${
+    body += `<li class="row" style="list-style: none; height: 15px;"><div class="col-2"><p>${
       viewPort
-    }:</div><div class="col-xs-10"> ${resultsObject.length} ${reportType}</div></li>`;
+    }:</p></div><div class="col-10"><p>${resultsObject.length} ${reportType}</p></div></li>`;
   });
   body += '</ul>';
   return body;
@@ -208,12 +207,13 @@ function printViewCounts(reports, reportType) {
  * @param {string}  testResults.viewPort
  * @param {string}  testResults.url
  * @param {string}  testResults.report
+ * @param {string} testType
  * @returns {string}
  */
-function printResultsList(testResults) {
+function printResultsList(testResults, testType) {
   const { viewPort, url, report } = testResults;
   const results = JSON.parse(report);
-  let html = `<h4>${viewPort.toUpperCase()}</h4><br/><ol>`;
+  let html = `<div class="affected-nodes-box"><a href="#${url}-${viewPort}-list" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="${url}-${viewPort}-list"><div class="affected-nodes-title-box"><h4><span>${escape(url)} ${viewPort.toUpperCase()}</span><span>${results.length} ${testType}</span></h4></div><a><div class="affected-nodes-list-box collapse" id="${url}-${viewPort}-list"><ol class="affected-nodes-list">`;
   if (results.length > 0) {
     html += `${results.reduce((item, { description, nodes, impact }) => {
       item += `<li>${impact ? `${impact.toUpperCase()}: ` : ''}${escape(description)}<br />`;
@@ -221,7 +221,7 @@ function printResultsList(testResults) {
       item += nodes.reduce(writeNodeMessages, '');
       item += '</ul></li>';
       return item;
-    }, '')}</ol>`;
+    }, '')}</ol></div></div>`;
     return html;
   }
   return '';
@@ -243,10 +243,10 @@ async function writeCompleteResults(testedURLs) {
     const violations = await this[OPTIONS].db.read('violations_summary', { url });
 
     const violationCount = countResults(violations);
-    writeToFile(marked(`### ${escape(url)} ${violationCount} violations`));
-    writeToFile('<br/>');
-    writeToFile(printViewCounts(violations, 'failed tests'));
-    await Promise.all(violations.map(violation => writeToFile(printResultsList(violation))));
+    if (violationCount > 0) {
+      writeToFile(marked(`### ${escape(url)}`));
+      await Promise.all(violations.map(violation => writeToFile(printResultsList(violation, 'failed tests'))));
+    }
   }));
 
   writeToFile(marked(`## Detailed List of Passing Tests: ${this[TOTALS].passes} passing tests`));
@@ -254,9 +254,9 @@ async function writeCompleteResults(testedURLs) {
     const passes = await this[OPTIONS].db.read('passes_summary', { url });
 
     const passCount = countResults(passes);
-    writeToFile(marked(`### ${escape(url)} ${passCount} passing tests`));
-    writeToFile('<br/>');
-    writeToFile(printViewCounts(passes, 'passing tests'));
-    await Promise.all(passes.map(passed => writeToFile(printResultsList(passed))));
+    if (passCount > 0) {
+      writeToFile(marked(`### ${escape(url)}`));
+      await Promise.all(passes.map(passed => writeToFile(printResultsList(passed, 'passing tests'))));
+    }
   }));
 }

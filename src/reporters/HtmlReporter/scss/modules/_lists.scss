@@ -1,6 +1,14 @@
+ol, ul {
+    line-height: 1.5;
+}
+
 ol>li {
     padding-bottom: 15px;
-    font-weight: 500
+    font-weight: 500;
+
+    ul {
+        margin-left: 20px;
+    }
 }
 
 ul>li {

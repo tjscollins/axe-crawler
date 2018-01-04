@@ -1,0 +1,29 @@
+@mixin custom-transition($transition, $function, $delay) {
+  transition-delay:$delay;
+  transition-timing-function: $function;
+  transition: $transition;
+}
+
+@mixin container-width {
+  @include for-xs {
+    min-width: 100vw;
+  }
+  @include for-sm {
+    min-width: $sm-width;
+  }
+  @include for-md {
+    min-width: $md-width;
+  }
+  @include for-lg {
+    min-width: $lg-width;
+  }
+}
+
+/*
+ * Custom width columns
+ */
+@mixin custom-columns($n, $prefix) {
+  @for $i from 1 through $n {
+  #{$prefix}.custom-col-#{$i} { width: 100% / $n * $i; }
+  }
+}
