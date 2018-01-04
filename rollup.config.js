@@ -26,7 +26,7 @@ export default {
 
   output: { // required (can be an array, for multiple outputs)
     // core output options
-    file: 'bin/axe-crawler', // required
+    file: 'dist/bin/axe-crawler', // required
     format: 'umd', // required
     name: 'axeCrawler',
     // globals,
