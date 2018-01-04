@@ -1,0 +1,19 @@
+thead th {
+    text-align: center;
+}
+
+tr {
+    border: 1px solid lightsalmon;
+}
+
+tbody th,
+tbody td {
+    padding: 5px;
+    text-align: left;
+    vertical-align: text-top;
+    font-weight: normal;
+}
+
+table.summary-table {
+    width: 100%;
+}
