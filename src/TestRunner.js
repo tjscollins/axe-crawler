@@ -92,7 +92,7 @@ export default class TestRunner {
  * @memberof TestRunner
  */
 async function testPage(testCase) {
-  const { logger, db } = this[OPTIONS];
+  const { logger, db, tags, rules, disabledRules } = this[OPTIONS];
 
   try {
     const { url, viewPort: { name, width, height } } = testCase;
@@ -115,7 +115,21 @@ async function testPage(testCase) {
         logger.info(`Got ${url}`);
         logger.info(`Testing ${url} ${name}`);
 
-        axeBuilder(driver)
+        let builder = axeBuilder(driver);
+
+        if (typeof tags !== 'undefined') {
+          builder = builder.withTags(tags);
+        }
+
+        if (typeof rules !== 'undefined') {
+          builder = builder.withRules(rules);
+        }
+
+        if (typeof disabledRules !== 'undefined') {
+          builder = builder.disableRules(disabledRules);
+        }
+
+        builder
           .analyze((result, err) => {
             if (err) {
               reject(err);

@@ -135,9 +135,17 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
             "height": 900
         }
     ],
-    "verbose": "error"
+    "verbose": "error",
+    "tags": ["wcag2a", "wcag2aa", "best-practice"],
+    "disabledRules": ["landmark-main-is-top-level"]
 }
 ```
+Alternately, rather than specify using tags, you could speecify the specific rules you wanted to test for:
+
+`"rules": ["region","skip-link"]`
+
+However, you can only specify by `rules` _or_ `tags`, not both.  If you specify by rules, that will completely override 
+the rules selected for using tags.
 
 ## Planned Features
 
