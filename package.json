@@ -1,6 +1,6 @@
 {
   "name": "axe-crawler",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "A highly configurable website crawler for automatically testing a website for accessibility issues using the axe-core library.  Uses selenium and headless Chrome to load pages, inject axe-core, and run tests.  Generates an html summary report in addition to raw JSON data.",
   "main": "dist/axe-crawler",
   "keywords": [
