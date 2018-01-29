@@ -123,5 +123,20 @@ describe('AxeCrawler', () => {
         exitStub.restore();
       });
     });
+
+    it('should ignore tel: and mailto: links', () => {
+      moxios.stubRequest('http://test.test', {
+        status: 200,
+        responseText: fs.readFileSync('__tests__/html/ignore_these_links.html'),
+      });
+
+      const config = new AxeCrawlerConfiguration({ domain: 'test.test', depth: 1 });
+      const crawler = new AxeCrawler(config);
+
+      return crawler.crawl().then((result) => {
+        expect(result).toBeInstanceOf(Set);
+        expect(result.size).toBe(1);
+      });
+    });
   });
 });

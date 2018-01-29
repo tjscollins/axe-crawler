@@ -10,7 +10,7 @@ const FILE_NAME = Symbol('Filename');
 const TOTALS = Symbol('Total count of passing and failing tests');
 const STYLE_SHEETS =
   '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.8.0/github-markdown.css"><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">';
-const CSS = fs.readFileSync(`${__dirname}/../index.css`);
+const CSS = fs.readFileSync(`${__dirname}/index.css`);
 
 // Private Methods
 const INIT_HTML = Symbol('Prepare HTML File');
