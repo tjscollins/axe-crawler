@@ -73,6 +73,17 @@ function notEmailLink(link) {
 }
 
 /**
+ * Tests whether a link is NOT a tel link
+ *
+ * @param {string} link
+ * @returns boolean
+ */
+function notTelLink(link) {
+  const telLinkRE = new RegExp('tel:\\+?\\d+');
+  return !telLinkRE.test(link);
+}
+
+/**
  * Tests whether a link is NOT a same page link
  *
  * @param {string} link
@@ -99,6 +110,7 @@ export function filterLinks(opts) {
     isURL(link) &&
     notMedia(link) &&
     notEmailLink(link) &&
+    notTelLink(link) &&
     matchDomain(domain)(link) &&
     // notSamePageLink(domain)(link) && // Buggy for SPA routing, disabled
     whiteListRegex.test(link) &&

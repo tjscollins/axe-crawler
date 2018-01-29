@@ -96,14 +96,14 @@ describe('AxeCrawler', () => {
       });
     });
 
-    it('should throw an error if supplied domain doesn\'t result in valid url', (done) => {
+    it('should call process.exit(1) if supplied domain doesn\'t result in valid url', () => {
       const config = new AxeCrawlerConfiguration({ domain: 'test/test', depth: 0 });
       const crawler = new AxeCrawler(config);
+      const exitStub = sinon.stub(process, 'exit');
+
       return crawler.crawl().then(() => {
-        done(new Error('crawl did not throw an error'));
-      }).catch((err) => {
-        expect(err).toBeInstanceOf(Error);
-        done();
+        expect(exitStub.calledWithExactly(1)).toBe(true);
+        exitStub.restore();
       });
     });
 
