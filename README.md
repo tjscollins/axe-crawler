@@ -136,16 +136,36 @@ Config file should be named `.axe-crawler.json` and be in the current directory 
         }
     ],
     "verbose": "error",
-    "tags": ["wcag2a", "wcag2aa", "best-practice"],
-    "disabledRules": ["landmark-main-is-top-level"]
+    "axe": {
+        "context": {
+            "include": [["#included"]],
+            "exclude": [["#excluded"]]
+        },
+        "options": {
+            "runOnly": {
+                "type": "tag",
+                "values": ["wcag2a", "wcag2aa", "best-practice"]
+            },
+            "rules": {
+                "landmark-main-is-top-level": { "enabled": false}
+            }
+        }
+    }
 }
 ```
-Alternately, rather than specify using tags, you could speecify the specific rules you wanted to test for:
+Alternately, as the `runOnly` type, rather than specify `tag`, you could specify `rule` and then list each specific rule you wanted to test for:
+```json
+{
+    "runOnly": {
+        "type": "rule",
+        "values": ["region","skip-link"]
+    }
+}
+```
 
-`"rules": ["region","skip-link"]`
+However, you can only specify by `rule` _or_ `tag` under `runOnly`, not both.  If you specify both, only the last one specified will be used.
 
-However, you can only specify by `rules` _or_ `tags`, not both.  If you specify by rules, that will completely override 
-the rules selected for using tags.
+For more details on the `context` and `options` parameters, check out the [relevant documentation on the axe-core API](https://github.com/dequelabs/axe-core/blob/develop/doc/API.md#parameters-axerun).
 
 ## Planned Features
 

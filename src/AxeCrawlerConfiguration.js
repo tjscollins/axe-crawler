@@ -41,6 +41,10 @@ const DEFAULT_OPTS = {
   ],
   verbose: 'error',
   useFileOver: 50, // Use file-system DB if total page views exceed this value
+  axe: {
+    context: {},
+    options: {},
+  },
 };
 
 /* --- Symbols for Private Values and Methods --- */
