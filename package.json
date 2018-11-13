@@ -22,7 +22,7 @@
     "test": "jest"
   },
   "bin": {
-    "axe-crawler": "dist/bin/axe-crawler"
+    "axe-crawler": "dist/axe-crawler"
   },
   "engines": {
     "node": ">=6"
