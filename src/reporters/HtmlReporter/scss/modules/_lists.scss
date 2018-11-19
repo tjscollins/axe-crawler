@@ -1,0 +1,21 @@
+ol, ul {
+    line-height: 1.5;
+}
+
+ol>li {
+    padding-bottom: 15px;
+    font-weight: 500;
+
+    ul {
+        margin-left: 20px;
+    }
+}
+
+ul>li {
+    font-weight: 400;
+    font-size: 12px;
+}
+
+ol>li>span {
+    font-weight: 400;
+}

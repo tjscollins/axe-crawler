@@ -1,0 +1,41 @@
+.affected-nodes-box {
+    margin: 10px 0px;
+    a[role='button'], a[role='button']:hover {
+        color: inherit;
+        text-decoration: inherit;
+    }
+}
+
+.affected-nodes-title-box {
+    border-radius: 2px 2px 0px 0px;
+    @include custom-transition(background-color 0.75s, ease, 0s);
+    &:hover, &:focus {
+        background-color: #a7bcca;
+    }
+
+    h4 {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 75%;
+        span {
+            font-weight: inherit;
+            font-size: inherit;
+        }
+    }
+
+}
+.affected-nodes-list-box {
+    border-radius: 0px 0px 2px 2px;
+}
+
+.affected-nodes-title-box,
+.affected-nodes-list-box {
+    border: 1px solid #666;
+    padding-bottom: 4px;
+    margin-bottom: -1px;
+}
+
+ol.affected-nodes-list {
+    margin-left: 30px;
+}

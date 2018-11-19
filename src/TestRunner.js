@@ -3,8 +3,8 @@ import chromeDriver from 'selenium-webdriver/chrome';
 import axeBuilder from 'axe-webdriverjs';
 
 import { selectSampleSet, createURLViewSet } from './util';
-import HTMLReporter from './reporters/HtmlReporter';
-import JSONReporter from './reporters/JSONReporter';
+import HTMLReporter from './reporters/HtmlReporter/index';
+import JSONReporter from './reporters/JSONReporter/index';
 
 /* --- Symbols for Private Members --- */
 
