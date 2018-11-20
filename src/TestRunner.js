@@ -92,7 +92,7 @@ export default class TestRunner {
  * @memberof TestRunner
  */
 async function testPage(testCase) {
-  const { logger, db } = this[OPTIONS];
+  const { logger, db, axe } = this[OPTIONS];
 
   try {
     const { url, viewPort: { name, width, height } } = testCase;
@@ -115,7 +115,18 @@ async function testPage(testCase) {
         logger.info(`Got ${url}`);
         logger.info(`Testing ${url} ${name}`);
 
-        axeBuilder(driver)
+        let builder = axeBuilder(driver);
+
+        if (typeof axe.context.include !== 'undefined') {
+          builder = builder.include(axe.context.include);
+        }
+
+        if (typeof axe.context.exclude !== 'undefined') {
+          builder = builder.exclude(axe.context.exclude);
+        }
+
+        builder
+          .options(axe.options)
           .analyze((result, err) => {
             if (err) {
               reject(err);

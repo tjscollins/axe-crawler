@@ -39,7 +39,7 @@
     "minimist": "^1.2.0",
     "objection": "^0.9.1",
     "selenium-webdriver": "^3.5.0",
-    "sqlite3": "^3.1.13",
+    "sqlite3": "^4.0.4",
     "utility-logger": "^0.1.4",
     "validator": "^8.2.0"
   },
